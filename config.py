@@ -1,7 +1,7 @@
 """Fixarr settings. Everything comes from the environment, so the same image runs next to any Sonarr."""
 import os
 
-VERSION = "3.2.0"
+VERSION = "3.2.1"
 
 SONARR = os.environ.get("SONARR_URL", "http://sonarr:8989").rstrip("/")
 SONARR_KEY = os.environ.get("SONARR_API_KEY", "")

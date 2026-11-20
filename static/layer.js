@@ -10,8 +10,8 @@
 (function () {
   'use strict';
   if (window.__fixarrLayer) return;
-  var VERSION = '3.2.0';
-  var BUILD = '20261120073304';        // replaced by static/build.sh; lets the add-on spot a stale cached copy
+  var VERSION = '3.2.1';
+  var BUILD = '20261120181435';        // replaced by static/build.sh; lets the add-on spot a stale cached copy
   window.__fixarrLayer = VERSION;
   var STANDALONE = !!window.FIXARR_STANDALONE;
   var REPO = 'Apex-Tech-Labs/fixarr';
@@ -521,13 +521,17 @@
     '.host{position:fixed;display:flex;flex-direction:column;background:var(--bg);z-index:1}',
     '.tbar{display:flex;align-items:stretch;height:60px;flex:none;padding:0 10px;background:var(--tb);color:var(--tbTxt)}',
     '.tsec{display:flex;align-items:stretch}.tsec.r{margin-left:auto}',
+    '.tcustom{display:flex;align-items:center;gap:12px;padding:0 8px}.tcustom:empty{display:none}',
+    '.tcustom input[type=text]{width:220px;height:32px}.tcustom .seg{padding:2px}.tcustom .seg button{min-height:26px;font-size:13px}',
+    '@media (max-width:760px){.tcustom input[type=text]{width:120px}.tcustom .seg button{padding:0 8px}}',
     '.tbtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:62px;padding:4px 8px 0;border:0;background:none;color:var(--tbTxt);cursor:pointer;transition:color .15s}',
     '.tbtn .i{width:21px;height:21px}.tbtn span{font-size:11.5px;line-height:1.15;white-space:nowrap}.tbtn .spin{width:21px;height:21px}',
     '.tbtn:hover:not(:disabled){color:var(--acc)}.tbtn:disabled{opacity:.4;cursor:default}.tbtn.hot{color:var(--acc)}',
     '.tsep{width:1px;margin:10px 8px;background:color-mix(in srgb,var(--tbTxt) 22%,transparent)}',
     '.tnote{display:flex;align-items:center;padding:0 10px;font-size:13px;color:var(--ok);opacity:0;transition:opacity .25s}.tnote.on{opacity:1}.tnote.err{color:var(--bad)}',
     '.pc{flex:1;overflow:auto;padding:20px;animation:fadein .2s ease}',
-    '.pc-inner{max-width:1600px}',
+    '.pc-inner{width:100%}',
+    '.pc-inner.set{max-width:1180px;margin:0 auto}',   /* forms read best centered; lists and grids use the full width */
 
     /* building blocks */
     '.legend{margin:0 0 18px;padding-bottom:6px;border-bottom:1px solid var(--line2);font-size:21px;font-weight:400;line-height:1.4;color:var(--strong);display:flex;align-items:center;gap:10px}',
@@ -598,8 +602,7 @@
     '.op.on,.op:hover{background:var(--hover)}.op.sel .l{color:var(--acc)}',
     '.op .th{width:30px;height:45px;flex:none;object-fit:cover;border-radius:2px;background:var(--card)}',
     /* poster browser, laid out like Sonarr's series index (poster view) */
-    '.pbar-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 16px}.pbar-top .legend{flex:1;margin:0;border:0;padding:0}',
-    '.pbar-top input{width:220px}',
+    '.pbrowse .legend{margin-bottom:16px}',
     '.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(162px,1fr));gap:20px 18px}',
     '.pcard{position:relative;display:block;padding:0;border:0;background:var(--card);color:inherit;text-align:left;cursor:pointer;border-radius:4px;overflow:hidden;box-shadow:0 0 10px rgba(0,0,0,.35);transition:transform .2s cubic-bezier(.2,.8,.2,1),box-shadow .2s}',
     '.pcard:hover{transform:translateY(-3px);box-shadow:0 6px 18px rgba(0,0,0,.5)}.pcard:focus-visible{outline:2px solid var(--acc);outline-offset:2px}',
@@ -614,7 +617,7 @@
     '.shead{display:flex;gap:14px;align-items:center;margin:0 0 16px}.shead img{width:60px;height:90px;object-fit:cover;border-radius:3px;background:var(--card);box-shadow:0 0 8px rgba(0,0,0,.4)}',
     '.shead .t{font-size:21px;color:var(--strong);line-height:1.3}.shead .s{color:var(--muted);font-size:13px;margin-top:3px}',
     '.plist tr[data-pi]{cursor:pointer}.plist td.pk{cursor:pointer}.plist tr:hover td{background:var(--hover)}',
-    '@media (max-width:640px){.pgrid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:14px}.pbar-top input{width:100%}}',
+    '@media (max-width:640px){.pgrid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:14px}}',
     '.lb .none{padding:10px 12px;color:var(--muted)}.lb .grp{padding:8px 12px 4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}',
     '.summary{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:20px 0 10px;color:var(--muted)}.summary b{color:var(--strong)}',
 
@@ -623,7 +626,7 @@
     '.secnav a{padding:6px 12px;border-radius:4px;color:var(--txt);text-decoration:none;font-size:13.5px;font-weight:500}.secnav a:hover{background:var(--hover);color:var(--acc)}.secnav a.on{background:var(--sideAct);color:var(--acc)}',
     '.fg{display:flex;align-items:flex-start;margin-bottom:22px}',
     '.fg>.fl{flex:0 0 250px;padding:6px 20px 0 0;text-align:right;font-weight:700;color:var(--strong)}',
-    '.fg>.fc{flex:1;min-width:0;max-width:640px}.fg .help{margin-top:6px;font-size:13px;line-height:1.55;color:var(--muted)}',
+    '.fg>.fc{flex:1;min-width:0;max-width:860px}.fg .help{margin-top:6px;font-size:13px;line-height:1.55;color:var(--muted)}',
     '.fg .fc>.switch{margin-top:5px}',
     '@media (max-width:900px){.fg{flex-direction:column}.fg>.fl{flex:none;text-align:left;padding:0 0 8px}}',
     '.switch{position:relative;display:inline-block;width:44px;height:24px;flex:none;cursor:pointer;vertical-align:middle}',
@@ -748,13 +751,14 @@
       return (list || []).map(function (b, i) {
         if (b === '|') return '<div class="tsep"></div>';
         if (b.note) return '<div class="tnote" id="tnote" aria-live="polite"></div>';
+        if (b.html) return b.html;
         return '<button type="button" class="tbtn' + (b.hot ? ' hot' : '') + '" data-tb="' + (b.id || i) + '"' + (b.disabled ? ' disabled' : '') +
           ' title="' + esc(b.title || b.label) + '">' + (b.spin ? '<span class="spin"></span>' : ico(b.icon, 21)) + '<span>' + esc(b.label) + '</span></button>';
       }).join('');
     }
     tb.innerHTML = '<div class="tsec">' + btns(left) + '</div><div class="tsec r">' + btns(right) + '</div>';
     (left || []).concat(right || []).forEach(function (b, i) {
-      if (!b || b === '|' || b.note || !b.onClick) return;
+      if (!b || b === '|' || b.note || b.html || !b.onClick) return;
       var el = tb.querySelector('[data-tb="' + (b.id || i) + '"]'); if (el) el.addEventListener('click', function () { b.onClick(el); });
     });
   }
@@ -969,7 +973,8 @@
   function pageImport(route, pc) {
     var q = route.q;
     toolbar([{ id: 'scan', label: 'Scan Folders', icon: 'refresh', title: 'Scan the download folders again', onClick: function () { refreshCatalog(true); } }, '|',
-             { id: 'imp', label: 'Import', icon: 'import', disabled: true, title: 'Import the selected files', onClick: confirmImport }], [{ note: true }]);
+             { id: 'imp', label: 'Import', icon: 'import', disabled: true, title: 'Import the selected files', onClick: confirmImport }],
+            [{ note: true }, { html: '<div class="tcustom" id="tbCustom"></div>' }]);
     pc.innerHTML = '<div class="pc-inner"><div class="row">' +
       '<div class="grow" style="flex:2"><span class="flabel" id="lPack">Pack</span><div id="cPack"></div></div>' +
       '<div class="grow"><span class="flabel" id="lSeries">Series</span><div id="cSeries"></div></div></div>' +
@@ -1083,23 +1088,25 @@
   }
   function drawBrowse() {
     var el = $('#ibrowse'); if (!el || !IMP) return;
-    if (IMP.pack) { el.innerHTML = ''; el.removeAttribute('data-v'); return; }
+    if (IMP.pack) { el.innerHTML = ''; el.removeAttribute('data-v'); clearBrowseTools(); return; }
     if (!DATA.catalog || !DATA.series) return;
     var sid = IMP.seriesLocked ? IMP.seriesCombo.value() : null;
-    if (sid) return drawSeriesPacks(el, sid);
+    if (sid) { clearBrowseTools(); return drawSeriesPacks(el, sid); }
     var cnt = {}, unknown = 0;
     DATA.catalog.items.forEach(function (x) { if (!actionable(x)) return; if (x.series_id) cnt[x.series_id] = (cnt[x.series_id] || 0) + 1; else unknown++; });
     var waiting = DATA.series.filter(function (s) { return cnt[s.id]; });
-    var B = IMP.browse;
-    if (el.getAttribute('data-v') !== 'grid') {
-      el.setAttribute('data-v', 'grid');
-      el.innerHTML = '<div class="pbar-top"><h2 class="legend" id="pbTitle"></h2>' +
-        '<div class="seg" role="radiogroup" aria-label="Which series"><button type="button" role="radio" data-bm="needs"></button><button type="button" role="radio" data-bm="all"></button></div>' +
-        '<input type="text" id="pbQ" placeholder="Filter series" aria-label="Filter series" autocomplete="off" spellcheck="false"></div>' +
-        '<div id="pbNote"></div><div class="pgrid" id="pbGrid"></div>';
+    var B = IMP.browse, tb = $('#tbCustom');
+    if (tb && !tb.firstChild) {                    // view switch and filter live in the toolbar, like Sonarr's
+      tb.innerHTML = '<div class="seg" role="radiogroup" aria-label="Which series"><button type="button" role="radio" data-bm="needs"></button><button type="button" role="radio" data-bm="all"></button></div>' +
+        '<input type="text" id="pbQ" placeholder="Filter series" aria-label="Filter series" autocomplete="off" spellcheck="false">';
       $('#pbQ').value = B.q;
       $('#pbQ').addEventListener('input', function () { B.q = this.value; drawBrowse(); });
-      each(el.querySelectorAll('[data-bm]'), function (b) { b.addEventListener('click', function () { B.mode = b.getAttribute('data-bm'); drawBrowse(); }); });
+      each(tb.querySelectorAll('[data-bm]'), function (b) { b.addEventListener('click', function () { B.mode = b.getAttribute('data-bm'); drawBrowse(); }); });
+    }
+    if (el.getAttribute('data-v') !== 'grid') {
+      el.setAttribute('data-v', 'grid');
+      el.className = 'pbrowse';
+      el.innerHTML = '<h2 class="legend" id="pbTitle"></h2><div id="pbNote"></div><div class="pgrid" id="pbGrid"></div>';
       $('#pbGrid').addEventListener('error', function (e) { if (e.target.tagName === 'IMG') e.target.remove(); }, true);
       $('#pbGrid').addEventListener('click', function (e) {
         var c = e.target.closest('.pcard'); if (!c) return;
@@ -1107,7 +1114,7 @@
       });
     }
     var mode = B.mode === 'all' ? 'all' : 'needs';
-    each(el.querySelectorAll('[data-bm]'), function (b) {
+    each(tb ? tb.querySelectorAll('[data-bm]') : [], function (b) {
       var all = b.getAttribute('data-bm') === 'all';
       b.textContent = all ? 'All series (' + DATA.series.length + ')' : 'Needs import (' + waiting.length + ')';
       b.setAttribute('aria-checked', String((all ? 'all' : 'needs') === mode));
@@ -1117,7 +1124,7 @@
     if (qq) list = list.filter(function (s) { return (s.title + ' ' + (s.year || '') + ' ' + (s.network || '')).toLowerCase().indexOf(qq) !== -1; });
     var note = '';
     if (DATA.catalog.building && !waiting.length) {
-      note = alertBox('busy', 'Checking your download folders against the library...');
+      var ist = $('#ist'); note = ist && /alert busy/.test(ist.innerHTML) ? '' : alertBox('busy', 'Checking your download folders against the library...');
       if (!IMP.recheck) IMP.recheck = setTimeout(function () { IMP.recheck = null; if ($('#ibrowse')) refreshCatalog(false); }, 3000);
     } else if (mode === 'needs' && !waiting.length) note = alertBox('ok', 'Nothing needs importing right now. Pick <b>All series</b> to browse your library, or type in the Pack box to run a finished pack again.');
     if (unknown) note += alertBox('warn', plural(unknown, 'pack') + ' could not be matched to a series. Find ' + (unknown === 1 ? 'it' : 'them') + ' in the Pack box, marked Needs review.');
@@ -1128,6 +1135,7 @@
     g.innerHTML = list.length ? list.map(function (s) { return posterCard(s, cnt[s.id]); }).join('')
       : (qq ? '<div class="muted">No series match "' + esc(B.q) + '".</div>' : '');
   }
+  function clearBrowseTools() { var tb = $('#tbCustom'); if (tb) tb.innerHTML = ''; }
   function drawSeriesPacks(el, sid) {
     var s = (DATA.series || []).find(function (x) { return x.id === sid; }) || { id: sid, title: seriesTitle(sid) };
     var order = { needs: 0, review: 1, done: 2, covered: 3 };
@@ -1517,7 +1525,7 @@
     var nav = STANDALONE ? '' : '<nav class="secnav" aria-label="Settings sections">' + settingsChildren().map(function (c) {
       return '<a href="' + routeHref('settings', c[0]) + '" data-go="settings/' + c[0] + '"' + (c[0] === sec ? ' class="on" aria-current="page"' : '') + '>' + c[1] + '</a>';
     }).join('') + '</nav>';
-    pc.innerHTML = '<div class="pc-inner">' + nav + '<div id="set">' + skeleton(5) + '</div></div>';
+    pc.innerHTML = '<div class="pc-inner set">' + nav + '<div id="set">' + skeleton(5) + '</div></div>';
     wireLinks(pc);
     Promise.all([api('api/settings'), sec === 'remembered' ? api('api/mappings') : null, sec === 'addon' ? api('api/health') : null, loadOverview()]).then(function (r) {
       SET = { s: r[0], maps: r[1] || [], health: r[2] || {} };

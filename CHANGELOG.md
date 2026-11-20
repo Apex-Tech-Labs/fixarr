@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.2.1
+
+- Every page uses the full width of the screen, in the web app and inside Sonarr. Settings stay centered so the forms stay readable.
+- Import page: the Needs import / All series switch and the series filter moved into the toolbar, next to Scan Folders and Import, like Sonarr's own view controls. They no longer wrap onto their own row inside Sonarr.
+- Demo mode: each made-up show has drawn poster art.
+- README screenshots retaken at full width.
+
 ## 3.2.0
 
 - Import page: a Sonarr-style poster grid of the series with packs waiting (or your whole library), with Sonarr's progress bar colors. Clicking a series shows its packs; a single pack opens straight away. The Series picker shows posters too.

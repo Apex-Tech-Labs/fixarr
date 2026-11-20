@@ -95,13 +95,14 @@
       return (list || []).map(function (b, i) {
         if (b === '|') return '<div class="tsep"></div>';
         if (b.note) return '<div class="tnote" id="tnote" aria-live="polite"></div>';
+        if (b.html) return b.html;
         return '<button type="button" class="tbtn' + (b.hot ? ' hot' : '') + '" data-tb="' + (b.id || i) + '"' + (b.disabled ? ' disabled' : '') +
           ' title="' + esc(b.title || b.label) + '">' + (b.spin ? '<span class="spin"></span>' : ico(b.icon, 21)) + '<span>' + esc(b.label) + '</span></button>';
       }).join('');
     }
     tb.innerHTML = '<div class="tsec">' + btns(left) + '</div><div class="tsec r">' + btns(right) + '</div>';
     (left || []).concat(right || []).forEach(function (b, i) {
-      if (!b || b === '|' || b.note || !b.onClick) return;
+      if (!b || b === '|' || b.note || b.html || !b.onClick) return;
       var el = tb.querySelector('[data-tb="' + (b.id || i) + '"]'); if (el) el.addEventListener('click', function () { b.onClick(el); });
     });
   }

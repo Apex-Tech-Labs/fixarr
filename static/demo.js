@@ -31,23 +31,107 @@
   function byId(id) { return SERIES.find(function (s) { return s.id === id; }); }
   function pub(s) { var o = {}; Object.keys(s).forEach(function (k) { if (k !== 'colors') o[k] = s[k]; }); return o; }
 
-  // ----------------------------------------------------------------- posters: drawn, so nothing real is shown
+  // ----------------------------------------------------------------- posters
   function words(t, max) {
     var out = [], line = '';
     t.split(' ').forEach(function (w) { if ((line + ' ' + w).trim().length > max && line) { out.push(line); line = w; } else line = (line + ' ' + w).trim(); });
     if (line) out.push(line); return out;
   }
+  // Each made-up show gets drawn poster art (a scene, a title and a network credit), so the demo looks like a real
+  // library without showing anyone's copyrighted artwork.
+  var ART = {
+    1: function (c) { // Harbor Lights: lighthouse and beam over the water
+      return '<path d="M0 0H250V375H0Z" fill="url(#sky)"/>' + stars(18, 160) +
+        '<path d="M150 118 L250 70 L250 150Z" fill="#fff" fill-opacity=".18"/><path d="M150 118 L0 60 L0 140Z" fill="#fff" fill-opacity=".12"/>' +
+        '<path d="M140 120h20l8 120h-36z" fill="#f4f1ea"/><path d="M136 150h28v12h-28zM133 190h34v12h-33z" fill="' + c[1] + '"/>' +
+        '<rect x="141" y="104" width="18" height="16" fill="#ffe58a"/><path d="M137 104h26l-13-14z" fill="#222"/>' +
+        '<path d="M90 236 L210 236 L230 260 L70 260Z" fill="#1b2430"/>' + waves(262, '#0b1a2a');
+    },
+    2: function (c) { // The Copper Mile: desert road to the sun
+      return '<path d="M0 0H250V375H0Z" fill="url(#sky)"/><circle cx="125" cy="150" r="46" fill="#ffd27a"/>' +
+        '<path d="M0 190 Q60 170 125 188 T250 180 V375 H0Z" fill="#4a2414"/><path d="M118 188 L132 188 L210 375 L40 375Z" fill="#2a1a12"/>' +
+        '<path d="M124 200h3v14h-3zM123 236h5v20h-5zM121 290h9v30h-9z" fill="#f2c14e"/>';
+    },
+    3: function (c) { // Orbit Kitchen: a planet with a ring of cutlery
+      return '<path d="M0 0H250V375H0Z" fill="url(#sky)"/>' + stars(30, 375) + '<circle cx="125" cy="150" r="58" fill="#c58cff"/>' +
+        '<circle cx="108" cy="134" r="14" fill="#fff" fill-opacity=".18"/><ellipse cx="125" cy="155" rx="104" ry="24" fill="none" stroke="#ffe08a" stroke-width="5" transform="rotate(-14 125 155)"/>' +
+        '<path d="M50 100 l10 30M56 98 l10 30" stroke="#eee" stroke-width="3"/><circle cx="198" cy="96" r="9" fill="#eee"/><path d="M198 105v28" stroke="#eee" stroke-width="4"/>';
+    },
+    4: function (c) { // Paper Lanterns: lanterns over a night street
+      var l = ''; [[60, 90, 22], [125, 70, 28], [190, 100, 20], [92, 150, 16], [165, 155, 18]].forEach(function (p) {
+        l += '<path d="M' + p[0] + ' ' + (p[1] - 40) + 'v' + (40 - p[2]) + '" stroke="#000" stroke-opacity=".5"/><ellipse cx="' + p[0] + '" cy="' + p[1] + '" rx="' + p[2] * .8 + '" ry="' + p[2] + '" fill="#ff8a5c"/>' +
+          '<ellipse cx="' + p[0] + '" cy="' + p[1] + '" rx="' + p[2] * .45 + '" ry="' + p[2] * .8 + '" fill="#ffd08a" fill-opacity=".7"/>'; });
+      return '<path d="M0 0H250V375H0Z" fill="url(#sky)"/>' + l + '<path d="M0 230h40v-30h30v30h20v-50h40v50h30v-20h40v20h50v145H0Z" fill="#14070c"/>';
+    },
+    5: function (c) { // Saltmarsh: reeds and water at dawn
+      var r = ''; for (var i = 0; i < 26; i++) { var x = 6 + i * 9.5, h = 50 + (i * 37) % 60; r += '<path d="M' + x + ' 260 q' + (i % 2 ? 6 : -6) + ' -' + h / 2 + ' ' + (i % 2 ? 2 : -2) + ' -' + h + '" stroke="#0e241e" stroke-width="3" fill="none"/>'; }
+      return '<path d="M0 0H250V375H0Z" fill="url(#sky)"/><circle cx="180" cy="120" r="30" fill="#fff4d6" fill-opacity=".85"/>' + r + waves(255, '#0f2d26');
+    },
+    6: function (c) { // Little Engineers: friendly gears
+      return '<path d="M0 0H250V375H0Z" fill="url(#sky)"/>' + gear(95, 140, 44, '#ffcf3f') + gear(165, 100, 28, '#ff7a59') + gear(170, 190, 32, '#4fc3f7') +
+        '<circle cx="95" cy="140" r="8" fill="#103a52"/><circle cx="82" cy="128" r="5" fill="#103a52"/><circle cx="108" cy="128" r="5" fill="#103a52"/><path d="M82 152 q13 10 26 0" stroke="#103a52" stroke-width="4" fill="none"/>';
+    },
+    7: function (c) { // Signal & Noise: a waveform
+      var d = 'M10 170'; for (var x = 10; x <= 240; x += 6) d += ' L' + x + ' ' + (170 + Math.sin(x / 9) * (40 * Math.sin(x / 70)) + ((x * 7) % 11) - 5);
+      return '<path d="M0 0H250V375H0Z" fill="url(#sky)"/>' + '<path d="' + d + '" stroke="#35c5f4" stroke-width="3" fill="none"/><path d="' + d + '" stroke="#fff" stroke-opacity=".4" stroke-width="1" fill="none" transform="translate(0 6)"/>' +
+        '<circle cx="125" cy="90" r="22" fill="none" stroke="#35c5f4" stroke-width="3"/><circle cx="125" cy="90" r="38" fill="none" stroke="#35c5f4" stroke-opacity=".5" stroke-width="2"/>';
+    },
+    8: function (c) { // Night Shift at Pine Ridge: pines under the moon
+      var t = ''; for (var i = 0; i < 9; i++) { var x = i * 31 - 4, h = 90 + (i * 29) % 50; t += '<path d="M' + x + ' 260 l18 -' + h + ' l18 ' + h + 'z" fill="#06120a"/>'; }
+      return '<path d="M0 0H250V375H0Z" fill="url(#sky)"/>' + stars(22, 170) + '<circle cx="170" cy="85" r="26" fill="#f4f1d0"/><circle cx="182" cy="78" r="24" fill="' + c[0] + '" fill-opacity=".9"/>' + t +
+        '<rect x="104" y="220" width="40" height="28" fill="#2a1d10"/><rect x="113" y="228" width="10" height="10" fill="#ffd96a"/>';
+    },
+    9: function (c) { // Fieldnotes from Nowhere: a notebook on dunes
+      return '<path d="M0 0H250V375H0Z" fill="url(#sky)"/><path d="M0 200 Q80 160 160 200 T250 190V375H0Z" fill="#8c7440"/><path d="M0 240 Q90 210 250 245V375H0Z" fill="#6d5a30"/>' +
+        '<g transform="rotate(-8 125 130)"><rect x="80" y="80" width="90" height="110" rx="4" fill="#f3ead2"/><path d="M92 102h66M92 116h66M92 130h50M92 144h60M92 158h40" stroke="#9a8a62" stroke-width="2"/><rect x="80" y="80" width="10" height="110" fill="#b8913b"/></g>';
+    },
+    10: function (c) { // The Lantern Keepers: a tower with a glowing window
+      return '<path d="M0 0H250V375H0Z" fill="url(#sky)"/>' + stars(26, 200) + '<path d="M100 250V110l25-30 25 30v140z" fill="#170b26"/><path d="M95 112h60l-30-36z" fill="#2b1545"/>' +
+        '<rect x="117" y="130" width="16" height="22" rx="8" fill="#ffd36e"/><circle cx="125" cy="141" r="30" fill="#ffd36e" fill-opacity=".15"/><path d="M0 250h250v125H0z" fill="#0d0617"/>';
+    },
+    11: function (c) { // Velvet Static: an old TV full of static
+      var s = ''; for (var i = 0; i < 140; i++) s += '<rect x="' + (64 + (i * 53) % 122) + '" y="' + (100 + (i * 31) % 86) + '" width="3" height="2" fill="#fff" fill-opacity="' + ((i % 5) / 6 + .1).toFixed(2) + '"/>';
+      return '<path d="M0 0H250V375H0Z" fill="url(#sky)"/><rect x="50" y="86" width="150" height="114" rx="14" fill="#1a0a1a"/><rect x="62" y="98" width="126" height="90" rx="10" fill="#555"/>' + s +
+        '<path d="M100 86 L80 50 M150 86 L170 50" stroke="#1a0a1a" stroke-width="4"/><rect x="88" y="200" width="74" height="10" fill="#1a0a1a"/>';
+    },
+    12: function (c) { // Cold Open Tonight: microphone in a spotlight
+      return '<path d="M0 0H250V375H0Z" fill="url(#sky)"/><path d="M125 0 L60 260 H190Z" fill="#fff" fill-opacity=".14"/><ellipse cx="125" cy="262" rx="70" ry="10" fill="#fff" fill-opacity=".18"/>' +
+        '<rect x="110" y="110" width="30" height="50" rx="15" fill="#d8d8d8"/><path d="M110 150 q15 24 30 0" stroke="#d8d8d8" stroke-width="4" fill="none"/><path d="M125 170v84" stroke="#888" stroke-width="5"/>' +
+        '<path d="M0 0h250v40H0z" fill="#9b1c1c"/><path d="M0 40 q20 20 40 0 t40 0 t40 0 t40 0 t40 0 t50 0" fill="#9b1c1c"/>';
+    },
+    13: function (c) { // Rooftop Gardens: skyline with plants on a roof
+      return '<path d="M0 0H250V375H0Z" fill="url(#sky)"/><path d="M0 230V150h30v-20h28v40h22v-60h34v80h20v-40h30v50h26v-30h30v60H0z" fill="#0f2312" fill-opacity=".85"/>' +
+        '<rect x="40" y="226" width="170" height="40" fill="#203a1f"/>' + [60, 90, 120, 150, 180].map(function (x, i) { return '<circle cx="' + x + '" cy="' + (214 - i % 2 * 8) + '" r="' + (16 + i % 3 * 4) + '" fill="#7fc45a"/>'; }).join('');
+    },
+    14: function (c) { // Mapmakers: contour lines and a compass
+      var r = ''; for (var i = 0; i < 8; i++) r += '<ellipse cx="' + (110 + i * 3) + '" cy="' + (170 - i * 2) + '" rx="' + (100 - i * 11) + '" ry="' + (70 - i * 8) + '" fill="none" stroke="#f4d9a6" stroke-opacity=".5" stroke-width="2"/>';
+      return '<path d="M0 0H250V375H0Z" fill="url(#sky)"/>' + r + '<circle cx="186" cy="92" r="26" fill="none" stroke="#fff" stroke-width="3"/><path d="M186 70 l7 22 -7 22 -7 -22z" fill="#e8a54b" stroke="#fff"/>';
+    },
+    15: function (c) { // Deep Field: a spiral galaxy
+      var s = ''; for (var i = 0; i < 90; i++) { var a = i / 6, r = 4 + i * 0.95; s += '<circle cx="' + (125 + Math.cos(a) * r).toFixed(1) + '" cy="' + (160 + Math.sin(a) * r * .6).toFixed(1) + '" r="' + (i % 4 ? 1.4 : 2.4) + '" fill="#cfe3ff" fill-opacity=".85"/>'; }
+      return '<path d="M0 0H250V375H0Z" fill="url(#sky)"/>' + stars(60, 375) + '<ellipse cx="125" cy="160" rx="50" ry="26" fill="#9cc2ff" fill-opacity=".25"/>' + s + '<circle cx="125" cy="160" r="9" fill="#fff"/>';
+    },
+    16: function (c) { // The Quiet Hours: a clock in a window
+      return '<path d="M0 0H250V375H0Z" fill="url(#sky)"/><rect x="60" y="70" width="130" height="170" fill="#0e1216" stroke="#3b4652" stroke-width="6"/><path d="M125 70v170M60 155h130" stroke="#3b4652" stroke-width="4"/>' +
+        '<circle cx="125" cy="155" r="42" fill="#e8ecef"/><path d="M125 155v-28M125 155l18 10" stroke="#1a1f24" stroke-width="4" stroke-linecap="round"/><circle cx="160" cy="98" r="10" fill="#e8ecef" fill-opacity=".8"/>';
+    }
+  };
+  function stars(n, maxY) { var s = ''; for (var i = 0; i < n; i++) s += '<circle cx="' + ((i * 97) % 250) + '" cy="' + ((i * 53) % maxY) + '" r="' + (i % 3 ? 0.9 : 1.6) + '" fill="#fff" fill-opacity=".8"/>'; return s; }
+  function waves(y, col) { return '<path d="M0 ' + y + ' q31 -8 62 0 t62 0 t62 0 t64 0 V375 H0Z" fill="' + col + '"/>'; }
+  function gear(x, y, r, col) {
+    var t = ''; for (var i = 0; i < 8; i++) t += '<rect x="' + (x - r * .18) + '" y="' + (y - r * 1.22) + '" width="' + r * .36 + '" height="' + r * .5 + '" rx="2" fill="' + col + '" transform="rotate(' + i * 45 + ' ' + x + ' ' + y + ')"/>';
+    return t + '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + col + '"/>';
+  }
   window.FIXARR_DEMO_POSTER = function (id) {
     var s = byId(+id); if (!s) return '';
-    var c = s.colors, lines = words(s.title.toUpperCase(), 11), y = 250 - lines.length * 17;
-    var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 250 375"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1">' +
-      '<stop offset="0" stop-color="' + c[1] + '"/><stop offset=".62" stop-color="' + c[0] + '"/></linearGradient>' +
-      '<radialGradient id="r" cx=".72" cy=".24" r=".55"><stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs>' +
-      '<rect width="250" height="375" fill="url(#g)"/><rect width="250" height="375" fill="url(#r)"/>' +
-      '<circle cx="' + (60 + (s.id * 37) % 140) + '" cy="' + (90 + (s.id * 23) % 60) + '" r="' + (38 + (s.id * 11) % 30) + '" fill="none" stroke="#fff" stroke-opacity=".25" stroke-width="2"/>' +
-      '<path d="M0 ' + (300 - (s.id * 7) % 40) + ' Q125 ' + (250 + (s.id * 13) % 50) + ' 250 ' + (290 - (s.id * 5) % 30) + ' V375 H0Z" fill="#000" fill-opacity=".35"/>' +
-      lines.map(function (l, i) { return '<text x="125" y="' + (y + i * 34) + '" text-anchor="middle" font-family="Segoe UI,Roboto,Arial,sans-serif" font-size="27" font-weight="800" letter-spacing="1" fill="#fff">' + l.replace(/&/g, '&amp;') + '</text>'; }).join('') +
-      '<text x="125" y="352" text-anchor="middle" font-family="Segoe UI,Roboto,Arial,sans-serif" font-size="12" letter-spacing="3" fill="#fff" fill-opacity=".75">' + s.network.toUpperCase() + '</text></svg>';
+    var c = s.colors, lines = words(s.title.toUpperCase(), 12), y = 300 - (lines.length - 1) * 28;
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 250 375"><defs>' +
+      '<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + c[0] + '"/><stop offset=".75" stop-color="' + c[1] + '"/></linearGradient>' +
+      '<linearGradient id="fade" x1="0" y1="0" x2="0" y2="1"><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".85"/></linearGradient></defs>' +
+      (ART[s.id] ? ART[s.id](c) : '<rect width="250" height="375" fill="url(#sky)"/>') +
+      '<rect width="250" height="375" fill="url(#fade)"/>' +
+      lines.map(function (l, i) { return '<text x="125" y="' + (y + i * 28) + '" text-anchor="middle" font-family="Georgia,\'Times New Roman\',serif" font-size="' + Math.min(25, Math.floor(214 / (l.length * 0.82))) + '" font-weight="700" letter-spacing="1.5" fill="#fff">' + l.replace(/&/g, '&amp;') + '</text>'; }).join('') +
+      '<text x="125" y="356" text-anchor="middle" font-family="Segoe UI,Roboto,Arial,sans-serif" font-size="10" letter-spacing="3" fill="#fff" fill-opacity=".7">A ' + s.network.toUpperCase() + ' ORIGINAL</text></svg>';
     return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
   };
 

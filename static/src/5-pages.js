@@ -10,7 +10,8 @@
   function pageImport(route, pc) {
     var q = route.q;
     toolbar([{ id: 'scan', label: 'Scan Folders', icon: 'refresh', title: 'Scan the download folders again', onClick: function () { refreshCatalog(true); } }, '|',
-             { id: 'imp', label: 'Import', icon: 'import', disabled: true, title: 'Import the selected files', onClick: confirmImport }], [{ note: true }]);
+             { id: 'imp', label: 'Import', icon: 'import', disabled: true, title: 'Import the selected files', onClick: confirmImport }],
+            [{ note: true }, { html: '<div class="tcustom" id="tbCustom"></div>' }]);
     pc.innerHTML = '<div class="pc-inner"><div class="row">' +
       '<div class="grow" style="flex:2"><span class="flabel" id="lPack">Pack</span><div id="cPack"></div></div>' +
       '<div class="grow"><span class="flabel" id="lSeries">Series</span><div id="cSeries"></div></div></div>' +
@@ -124,23 +125,25 @@
   }
   function drawBrowse() {
     var el = $('#ibrowse'); if (!el || !IMP) return;
-    if (IMP.pack) { el.innerHTML = ''; el.removeAttribute('data-v'); return; }
+    if (IMP.pack) { el.innerHTML = ''; el.removeAttribute('data-v'); clearBrowseTools(); return; }
     if (!DATA.catalog || !DATA.series) return;
     var sid = IMP.seriesLocked ? IMP.seriesCombo.value() : null;
-    if (sid) return drawSeriesPacks(el, sid);
+    if (sid) { clearBrowseTools(); return drawSeriesPacks(el, sid); }
     var cnt = {}, unknown = 0;
     DATA.catalog.items.forEach(function (x) { if (!actionable(x)) return; if (x.series_id) cnt[x.series_id] = (cnt[x.series_id] || 0) + 1; else unknown++; });
     var waiting = DATA.series.filter(function (s) { return cnt[s.id]; });
-    var B = IMP.browse;
-    if (el.getAttribute('data-v') !== 'grid') {
-      el.setAttribute('data-v', 'grid');
-      el.innerHTML = '<div class="pbar-top"><h2 class="legend" id="pbTitle"></h2>' +
-        '<div class="seg" role="radiogroup" aria-label="Which series"><button type="button" role="radio" data-bm="needs"></button><button type="button" role="radio" data-bm="all"></button></div>' +
-        '<input type="text" id="pbQ" placeholder="Filter series" aria-label="Filter series" autocomplete="off" spellcheck="false"></div>' +
-        '<div id="pbNote"></div><div class="pgrid" id="pbGrid"></div>';
+    var B = IMP.browse, tb = $('#tbCustom');
+    if (tb && !tb.firstChild) {                    // view switch and filter live in the toolbar, like Sonarr's
+      tb.innerHTML = '<div class="seg" role="radiogroup" aria-label="Which series"><button type="button" role="radio" data-bm="needs"></button><button type="button" role="radio" data-bm="all"></button></div>' +
+        '<input type="text" id="pbQ" placeholder="Filter series" aria-label="Filter series" autocomplete="off" spellcheck="false">';
       $('#pbQ').value = B.q;
       $('#pbQ').addEventListener('input', function () { B.q = this.value; drawBrowse(); });
-      each(el.querySelectorAll('[data-bm]'), function (b) { b.addEventListener('click', function () { B.mode = b.getAttribute('data-bm'); drawBrowse(); }); });
+      each(tb.querySelectorAll('[data-bm]'), function (b) { b.addEventListener('click', function () { B.mode = b.getAttribute('data-bm'); drawBrowse(); }); });
+    }
+    if (el.getAttribute('data-v') !== 'grid') {
+      el.setAttribute('data-v', 'grid');
+      el.className = 'pbrowse';
+      el.innerHTML = '<h2 class="legend" id="pbTitle"></h2><div id="pbNote"></div><div class="pgrid" id="pbGrid"></div>';
       $('#pbGrid').addEventListener('error', function (e) { if (e.target.tagName === 'IMG') e.target.remove(); }, true);
       $('#pbGrid').addEventListener('click', function (e) {
         var c = e.target.closest('.pcard'); if (!c) return;
@@ -148,7 +151,7 @@
       });
     }
     var mode = B.mode === 'all' ? 'all' : 'needs';
-    each(el.querySelectorAll('[data-bm]'), function (b) {
+    each(tb ? tb.querySelectorAll('[data-bm]') : [], function (b) {
       var all = b.getAttribute('data-bm') === 'all';
       b.textContent = all ? 'All series (' + DATA.series.length + ')' : 'Needs import (' + waiting.length + ')';
       b.setAttribute('aria-checked', String((all ? 'all' : 'needs') === mode));
@@ -158,7 +161,7 @@
     if (qq) list = list.filter(function (s) { return (s.title + ' ' + (s.year || '') + ' ' + (s.network || '')).toLowerCase().indexOf(qq) !== -1; });
     var note = '';
     if (DATA.catalog.building && !waiting.length) {
-      note = alertBox('busy', 'Checking your download folders against the library...');
+      var ist = $('#ist'); note = ist && /alert busy/.test(ist.innerHTML) ? '' : alertBox('busy', 'Checking your download folders against the library...');
       if (!IMP.recheck) IMP.recheck = setTimeout(function () { IMP.recheck = null; if ($('#ibrowse')) refreshCatalog(false); }, 3000);
     } else if (mode === 'needs' && !waiting.length) note = alertBox('ok', 'Nothing needs importing right now. Pick <b>All series</b> to browse your library, or type in the Pack box to run a finished pack again.');
     if (unknown) note += alertBox('warn', plural(unknown, 'pack') + ' could not be matched to a series. Find ' + (unknown === 1 ? 'it' : 'them') + ' in the Pack box, marked Needs review.');
@@ -169,6 +172,7 @@
     g.innerHTML = list.length ? list.map(function (s) { return posterCard(s, cnt[s.id]); }).join('')
       : (qq ? '<div class="muted">No series match "' + esc(B.q) + '".</div>' : '');
   }
+  function clearBrowseTools() { var tb = $('#tbCustom'); if (tb) tb.innerHTML = ''; }
   function drawSeriesPacks(el, sid) {
     var s = (DATA.series || []).find(function (x) { return x.id === sid; }) || { id: sid, title: seriesTitle(sid) };
     var order = { needs: 0, review: 1, done: 2, covered: 3 };

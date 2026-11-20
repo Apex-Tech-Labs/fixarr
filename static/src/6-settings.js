@@ -10,7 +10,7 @@
     var nav = STANDALONE ? '' : '<nav class="secnav" aria-label="Settings sections">' + settingsChildren().map(function (c) {
       return '<a href="' + routeHref('settings', c[0]) + '" data-go="settings/' + c[0] + '"' + (c[0] === sec ? ' class="on" aria-current="page"' : '') + '>' + c[1] + '</a>';
     }).join('') + '</nav>';
-    pc.innerHTML = '<div class="pc-inner">' + nav + '<div id="set">' + skeleton(5) + '</div></div>';
+    pc.innerHTML = '<div class="pc-inner set">' + nav + '<div id="set">' + skeleton(5) + '</div></div>';
     wireLinks(pc);
     Promise.all([api('api/settings'), sec === 'remembered' ? api('api/mappings') : null, sec === 'addon' ? api('api/health') : null, loadOverview()]).then(function (r) {
       SET = { s: r[0], maps: r[1] || [], health: r[2] || {} };

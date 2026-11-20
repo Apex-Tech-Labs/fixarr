@@ -10,7 +10,7 @@
 (function () {
   'use strict';
   if (window.__fixarrLayer) return;
-  var VERSION = '3.2.0';
+  var VERSION = '3.2.1';
   var BUILD = '__FIXARR_BUILD__';        // replaced by static/build.sh; lets the add-on spot a stale cached copy
   window.__fixarrLayer = VERSION;
   var STANDALONE = !!window.FIXARR_STANDALONE;
