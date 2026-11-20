@@ -1,10 +1,12 @@
 """Fixarr settings. Everything comes from the environment, so the same image runs next to any Sonarr."""
 import os
 
-VERSION = "3.0.0"
+VERSION = "3.1.0"
 
 SONARR = os.environ.get("SONARR_URL", "http://sonarr:8989").rstrip("/")
 SONARR_KEY = os.environ.get("SONARR_API_KEY", "")
+# Optional: Sonarr's address as your browser sees it, so the web app can link series to Sonarr.
+SONARR_PUBLIC = os.environ.get("SONARR_PUBLIC_URL", "").rstrip("/")
 
 # Fixarr must see the same /data tree as Sonarr and the download client (hardlinks need one filesystem).
 DATA_ROOT = os.environ.get("DATA_ROOT", "/data")

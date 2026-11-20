@@ -1,5 +1,17 @@
 # Changelog
 
+## 3.1.0
+
+- New layout modeled on Sonarr: header with the Fixarr logo, title and a search box (packs and series, press / to focus), a left menu with counts, and a toolbar on every page.
+- Settings is now a page with its own sections instead of a window.
+- Inside Sonarr, Fixarr pages live at `/addons/fixarr/...`, its menu entry gets sub-items, and series, season, Wanted and Queue buttons open the right page directly.
+- Activity and History are paginated; the Audit's "Not hardlinked" list is paged too.
+- Check Now and Run Audit moved to the toolbar; explanatory text moved into labeled info boxes.
+- Neutral grey count badges, bold white menu titles with a hover effect.
+- Fixed oddly drawn rows in Activity's "Recently handled" list.
+- The web app's script URL now includes the build time, so a new version is never served from a stale cache.
+- Source of the UI split into `static/src/` and concatenated into `static/layer.js`.
+
 ## 3.0.0
 
 - Fixarr inside Sonarr's UI: tabbed panel (Import, Activity, History, Audit, Settings), season icons, Wanted and Queue buttons.

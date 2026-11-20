@@ -6,7 +6,7 @@ Routes kept from 2.x (Mission Patch and the standalone page use them): /, /api/p
 import datetime, os, threading, time
 from flask import Flask, request, jsonify, render_template, send_from_directory
 import audit, importer, packs, plex, resolver, sonarr, store, version
-from config import VERSION, CORS_ORIGINS, SONARR
+from config import VERSION, CORS_ORIGINS, SONARR, SONARR_PUBLIC
 
 app = Flask(__name__)
 
@@ -27,7 +27,11 @@ def sonarr_down(e): return err(str(e), 502)
 
 # ------------------------------------------------------------------ pages and the layer
 @app.route("/")
-def index(): return render_template("index.html", version=VERSION)
+def index():
+    # The layer's file time is part of its URL, so a new build is never served from a browser or CDN cache.
+    try: v = "%s-%d" % (VERSION, int(os.path.getmtime(os.path.join(app.static_folder, "layer.js"))))
+    except OSError: v = VERSION
+    return render_template("index.html", version=VERSION, asset_v=v)
 
 @app.route("/layer.js")
 def layer_js():
@@ -134,11 +138,20 @@ def api_overview():
         "packs": {k: sum(1 for x in items if x["state"] == k) for k in ("needs", "review", "done", "covered")},
         "building": building, "resolver": {"running": st["running"], "at": st["at"], "open": len(st["downloads"])},
         "audit": {k: v for k, v in audit.results().items() if k in ("at", "running", "progress")},
-        "recycle_bin": bool(sonarr.recycle_bin())})
+        "recycle_bin": bool(sonarr.recycle_bin()), "sonarr_public": SONARR_PUBLIC})
+
+def _page(items):
+    """?page=1&pageSize=25 -> one page plus totals (the UI pages through long lists)."""
+    size = max(5, min(200, request.args.get("pageSize", 25, type=int)))
+    total = len(items); pages = max(1, -(-total // size))
+    page = max(1, min(pages, request.args.get("page", 1, type=int)))
+    return {"records": items[(page - 1) * size: page * size], "total": total, "page": page, "pageSize": size, "pages": pages}
 
 @app.route("/api/activity")
 def api_activity():
-    return jsonify({"resolver": resolver.state(), "log": store.activity()[:150]})
+    log = store.activity()
+    if request.args.get("page"): return jsonify({"resolver": resolver.state(), "log": _page(log)})
+    return jsonify({"resolver": resolver.state(), "log": log[:150]})
 
 @app.route("/api/resolve", methods=["POST"])
 def api_resolve():
@@ -149,9 +162,10 @@ def api_resolve():
 @app.route("/api/history")
 def api_history():
     out = []
-    for e in store.history()[:200]:
+    for e in store.history():
         out.append({k: v for k, v in e.items() if k not in ("before", "after", "items")} | {"can_undo": not e.get("undone") and bool(e.get("landed") or e.get("placed") or e.get("kind") == "relink")})
-    return jsonify(out)
+    if request.args.get("page"): return jsonify(_page(out))
+    return jsonify(out[:200])
 
 @app.route("/api/history/<eid>/undo", methods=["POST"])
 def api_undo(eid):
