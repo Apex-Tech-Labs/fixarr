@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+*.bak*
+# local regression data from a real library stays private
+tests/fixtures/
+tests/run.py
+tests/capture.py
+tests/legacy.py
+tests/expected.json

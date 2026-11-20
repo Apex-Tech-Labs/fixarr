@@ -1,0 +1,25 @@
+# Fixarr next to Sonarr. Fixarr must mount the SAME host data folder as Sonarr and the download client.
+services:
+  fixarr:
+    image: ghcr.io/apex-tech-labs/fixarr:latest
+    container_name: fixarr
+    user: 1000:1000                            # the user Sonarr runs as
+    environment:
+      - TZ=Etc/UTC
+      - SONARR_URL=http://sonarr:8989
+      - SONARR_API_KEY=${SONARR_API_KEY}
+      - SCAN_DIRS=/data/torrents/tv            # comma-separated; add a manual-downloads folder if you have one
+      # - DATA_ROOT=/data
+      # - TORRENTS_ROOT=/data/torrents
+      # Optional: Plex scan after Fixarr places specials in Season 00
+      # - PLEX_URL=http://plex:32400
+      # - PLEX_TOKEN=${PLEX_TOKEN}
+      # - PLEX_PATH_MAP=/data=/data            # container_path=plex_path when they differ
+      # Optional: userscript install (no reverse proxy). Your Sonarr address as the browser sees it.
+      # - CORS_ORIGINS=https://sonarr.example.com
+    volumes:
+      - ./fixarr:/config
+      - /srv/data:/data                        # same as Sonarr's /data
+    ports:
+      - 8686:8686
+    restart: unless-stopped

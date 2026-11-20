@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Fixarr imports the season packs Sonarr can't">
+<title>Fixarr</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2335c5f4'%3E%3Cpath d='M12 2 2 7l10 5 10-5z'/%3E%3Cpath d='m2 12 10 5 10-5-2.4-1.2L12 14.6l-7.6-3.8z'/%3E%3Cpath d='m2 17 10 5 10-5-2.4-1.2L12 19.6l-7.6-3.8z'/%3E%3C/svg%3E">
+<style>
+  /* The panel reads Sonarr's theme variable names, so the standalone page defines the same names. */
+  html{--pageBackground:#202020;--modalBackgroundColor:#2a2a2a;--cardBackgroundColor:#333333;--inputBackgroundColor:#333333;
+    --textColor:#e1e2e3;--helpTextColor:#909293;--borderColor:#858585;--themeBlue:#35c5f4;--primaryColor:#5d9cec;
+    --successBackgroundColor:#27c24c;--warningColor:#ffa500;--dangerColor:#f05050;--tableRowHoverBackgroundColor:rgba(255,255,255,.08);
+    --defaultBorderColor:#393f45;--defaultBackgroundColor:#333333;--defaultButtonTextColor:#eeeeee;--defaultHoverBackgroundColor:#444444;
+    --defaultHoverBorderColor:#5a6265;--primaryBackgroundColor:#5d9cec;--primaryBorderColor:#5899eb;--primaryHoverBackgroundColor:#4b91ea;
+    --inputBorderColor:#505050;--inputFocusBorderColor:#66afe9;--modalBackdropBackgroundColor:rgba(0,0,0,.6);color-scheme:dark}
+  html[data-theme="sonarr-light"],html[data-theme="auto"].light{--pageBackground:#f5f7fa;--modalBackgroundColor:#ffffff;--cardBackgroundColor:#ffffff;
+    --inputBackgroundColor:#ffffff;--textColor:#515253;--helpTextColor:#76797a;--borderColor:#bfbfbf;--themeBlue:#2193b5;--primaryColor:#5d9cec;
+    --successBackgroundColor:#1f9d3f;--warningColor:#c07d16;--dangerColor:#cc2222;--tableRowHoverBackgroundColor:rgba(0,0,0,.05);
+    --defaultBorderColor:#cccccc;--defaultBackgroundColor:#ffffff;--defaultButtonTextColor:#333333;--defaultHoverBackgroundColor:#e6e6e6;
+    --defaultHoverBorderColor:#adadad;--inputBorderColor:#dde6e9;color-scheme:light}
+  html[data-theme="harbor"]{--pageBackground:#1a1d24;--modalBackgroundColor:#20242b;--cardBackgroundColor:#2a2f38;--inputBackgroundColor:#2a2f38;
+    --textColor:#e1e2e4;--helpTextColor:#8a8f99;--borderColor:#3a3f48;--themeBlue:#26a7e1;--defaultBorderColor:#3a3f48;--defaultBackgroundColor:#2a2f38;
+    --defaultHoverBackgroundColor:#343a45;--inputBorderColor:#3a3f48}
+  html[data-theme="apex"]{--pageBackground:#0a0a0a;--modalBackgroundColor:#0f1113;--cardBackgroundColor:#161819;--inputBackgroundColor:#161819;
+    --textColor:#ffffff;--helpTextColor:#929292;--borderColor:#262626;--themeBlue:#26a7e1;--primaryColor:#26a7e1;--primaryBackgroundColor:#26a7e1;
+    --primaryBorderColor:#26a7e1;--primaryHoverBackgroundColor:#1b8fc4;--defaultBorderColor:#262626;--defaultBackgroundColor:#161819;
+    --defaultHoverBackgroundColor:#1e2123;--inputBorderColor:#262626;--successBackgroundColor:#00c43a}
+  html,body{margin:0;height:100%;background:var(--pageBackground)}
+  noscript{display:block;padding:40px;font:15px/1.5 system-ui,sans-serif;color:var(--textColor)}
+</style>
+<script>
+(function () {
+  var h = document.documentElement, mq = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)');
+  function apply(id) {
+    h.setAttribute('data-theme', id);
+    h.classList.toggle('light', id === 'auto' && !!(mq && mq.matches));
+  }
+  window.fixarrTheme = function (id) { try { localStorage.setItem('fixarr-theme', id); } catch (e) {} apply(id); };
+  var cur = 'auto'; try { cur = localStorage.getItem('fixarr-theme') || 'auto'; } catch (e) {}
+  apply(cur);
+  if (mq && mq.addEventListener) mq.addEventListener('change', function () { apply(h.getAttribute('data-theme')); });
+  window.FIXARR_STANDALONE = true;
+})();
+</script>
+</head>
+<body>
+<noscript>Fixarr needs JavaScript.</noscript>
+<script defer src="layer.js?v={{ version }}"></script>
+</body>
+</html>
