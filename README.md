@@ -72,7 +72,7 @@ The usual fix is Sonarr's **Wanted > Manual Import > Interactive Import**, picki
 | <img src="docs/screenshots/sonarr-addon.jpg" alt="The Fixarr add-on inside Sonarr's own sidebar, with its pages rendered in Sonarr's content area"> | <img src="docs/screenshots/settings.jpg" alt="Fixarr settings page for auto mode and the Sonarr webhook"> |
 | **Inside Sonarr.** The add-on gives Fixarr a menu entry and pages of its own in Sonarr. | **Settings.** Auto mode, matching, audit, add-on and updates, each on its own page. |
 
-All screenshots use Fixarr's built-in demo data. Open `http://your-server:8686/?demo` to click through it yourself.
+The poster grid at the top shows a real library. The other screenshots use Fixarr's built-in demo data; open `http://your-server:8686/?demo` to click through it yourself.
 
 ## Quick start
 
