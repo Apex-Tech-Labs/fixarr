@@ -80,3 +80,23 @@ def stop_tracking(queue_ids):
 def delete_episode_file(fid):
     """Sonarr moves the file to its recycle bin when one is configured."""
     api("/api/v3/episodefile/%d" % int(fid), "DELETE")
+
+
+_posters = {}
+def poster(sid):
+    """Poster bytes for a series from Sonarr's media cover API, cached in memory for an hour."""
+    sid = int(sid)
+    hit = _posters.get(sid)
+    if hit and time.time() - hit[0] < 3600: return hit[1], hit[2]
+    req = urllib.request.Request(SONARR + "/api/v3/mediacover/%d/poster-250.jpg" % sid, headers={"X-Api-Key": SONARR_KEY})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            data, ctype = r.read(), r.headers.get("Content-Type") or "image/jpeg"
+    except urllib.error.HTTPError as e:
+        if e.code == 404: data, ctype = None, None
+        else: raise SonarrError("Sonarr returned %d for the poster" % e.code)
+    except urllib.error.URLError as e:
+        raise SonarrError("Sonarr is not reachable at %s (%s)" % (SONARR, e.reason))
+    if len(_posters) > 2000: _posters.clear()
+    _posters[sid] = (time.time(), data, ctype)
+    return data, ctype

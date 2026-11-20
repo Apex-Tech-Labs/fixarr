@@ -15,6 +15,8 @@ services:
       # - PLEX_URL=http://plex:32400
       # - PLEX_TOKEN=${PLEX_TOKEN}
       # - PLEX_PATH_MAP=/data=/data            # container_path=plex_path when they differ
+      # Optional: Sonarr's address as your browser sees it, so the web app can link to Sonarr
+      # - SONARR_PUBLIC_URL=https://sonarr.example.com
       # Optional: userscript install (no reverse proxy). Your Sonarr address as the browser sees it.
       # - CORS_ORIGINS=https://sonarr.example.com
     volumes:

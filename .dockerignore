@@ -7,3 +7,4 @@ tests
 docker-compose*.yml
 *.md
 static/src
+docs

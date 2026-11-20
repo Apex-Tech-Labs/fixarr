@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.2.0
+
+- Import page: a Sonarr-style poster grid of the series with packs waiting (or your whole library), with Sonarr's progress bar colors. Clicking a series shows its packs; a single pack opens straight away. The Series picker shows posters too.
+- The Sonarr add-on notices when a browser or proxy cache hands Sonarr an old copy of it and loads the current build by itself. Each build is stamped by `static/build.sh`.
+- Demo mode: open the web app with `?demo` to see every page with made-up shows. Used for the README screenshots.
+- Sonarr Light theme: the left menu is readable again. The alternate icon switches to a black version on light backgrounds (browser tab and Appearance settings).
+- Apex theme: the version link in the menu uses the Apex accent.
+- New endpoints: `/api/build` and `/api/poster/<id>` (Sonarr's poster through Fixarr, cached).
+
 ## 3.1.0
 
 - New layout modeled on Sonarr: header with the Fixarr logo, title and a search box (packs and series, press / to focus), a left menu with counts, and a toolbar on every page.

@@ -21,32 +21,38 @@
     --cardBackgroundColor:#ffffff;--inputBackgroundColor:#ffffff;--textColor:#515253;--helpTextColor:#6f7275;--themeBlue:#2193b5;
     --successBackgroundColor:#1f9d3f;--warningColor:#c07d16;--dangerColor:#cc2222;--tableRowHoverBackgroundColor:rgba(0,0,0,.05);
     --defaultBorderColor:#cccccc;--defaultBackgroundColor:#ffffff;--defaultButtonTextColor:#333333;--defaultHoverBackgroundColor:#e6e6e6;
-    --defaultHoverBorderColor:#adadad;--fxStrong:#2b2c2d;color-scheme:light}
+    --defaultHoverBorderColor:#adadad;--fxStrong:#2b2c2d;--fxNav:#fff;color-scheme:light}
   html[data-theme="harbor"]{--pageBackground:#1a1d24;--pageHeaderBackgroundColor:#20242b;--sidebarBackgroundColor:#20242b;--sidebarActiveBackgroundColor:#2a2f38;
     --toolbarBackgroundColor:#1d2027;--modalBackgroundColor:#20242b;--cardBackgroundColor:#2a2f38;--inputBackgroundColor:#2a2f38;--textColor:#cfd2d7;
     --helpTextColor:#8a8f99;--themeBlue:#26a7e1;--defaultBorderColor:#3a3f48;--defaultBackgroundColor:#2a2f38;--defaultHoverBackgroundColor:#343a45}
   html[data-theme="apex"]{--pageBackground:#0a0a0a;--pageHeaderBackgroundColor:#0f1113;--sidebarBackgroundColor:#0f1113;--sidebarActiveBackgroundColor:#161819;
     --toolbarBackgroundColor:#121416;--modalBackgroundColor:#0f1113;--cardBackgroundColor:#161819;--inputBackgroundColor:#161819;--textColor:#d4d4d4;
     --helpTextColor:#929292;--themeBlue:#26a7e1;--primaryColor:#26a7e1;--primaryBackgroundColor:#26a7e1;--primaryBorderColor:#26a7e1;
-    --primaryHoverBackgroundColor:#1b8fc4;--defaultBorderColor:#262626;--defaultBackgroundColor:#161819;--defaultHoverBackgroundColor:#1e2123;--successBackgroundColor:#00c43a}
+    --primaryHoverBackgroundColor:#1b8fc4;--defaultBorderColor:#262626;--defaultBackgroundColor:#161819;--defaultHoverBackgroundColor:#1e2123;--successBackgroundColor:#00c43a;--fxFoot:#3a5773}
   html,body{margin:0;height:100%;background:var(--pageBackground)}
   noscript{display:block;padding:40px;font:15px/1.5 system-ui,sans-serif;color:var(--textColor)}
 </style>
 <script>
 (function () {
   var h = document.documentElement, mq = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)');
-  function apply(id) { h.setAttribute('data-theme', id); h.classList.toggle('light', id === 'auto' && !!(mq && mq.matches)); }
+  function fav() {                      // the alternate icon has a black version for light themes
+    var ic = null; try { ic = localStorage.getItem('fixarr-icon'); } catch (e) {}
+    var light = h.getAttribute('data-theme') === 'sonarr-light' || h.classList.contains('light');
+    var l = document.querySelector('link[rel=icon]'); if (!l) return;
+    l.href = ic ? (light && /fixarr2\.webp(\?|$)/.test(ic) ? 'static/icons/fixarr2-dark.webp' : ic) : 'static/icons/fixarr.webp';
+  }
+  function apply(id) { h.setAttribute('data-theme', id); h.classList.toggle('light', id === 'auto' && !!(mq && mq.matches)); fav(); }
   window.fixarrTheme = function (id) { try { localStorage.setItem('fixarr-theme', id); } catch (e) {} apply(id); };
   var cur = 'auto'; try { cur = localStorage.getItem('fixarr-theme') || 'auto'; } catch (e) {}
   apply(cur);
   if (mq && mq.addEventListener) mq.addEventListener('change', function () { apply(h.getAttribute('data-theme')); });
-  try { var ic = localStorage.getItem('fixarr-icon'); if (ic) document.querySelector('link[rel=icon]').href = ic; } catch (e) {}
   window.FIXARR_STANDALONE = true;
 })();
 </script>
 </head>
 <body>
 <noscript>Fixarr needs JavaScript.</noscript>
+<script>if (/[?&]demo(=|&|$)/.test(location.search)) document.write('<script src="static/demo.js?v={{ asset_v }}"><\/script>');</script>
 <script defer src="layer.js?v={{ asset_v }}"></script>
 </body>
 </html>

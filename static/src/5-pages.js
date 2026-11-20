@@ -15,9 +15,10 @@
       '<div class="grow" style="flex:2"><span class="flabel" id="lPack">Pack</span><div id="cPack"></div></div>' +
       '<div class="grow"><span class="flabel" id="lSeries">Series</span><div id="cSeries"></div></div></div>' +
       '<div class="pills" id="pills"></div><div id="ist" style="margin-top:18px"></div>' +
-      '<div id="ires">' + emptyState('layers', 'Pick a pack', 'Packs that still need importing are listed first. Type in the Pack box to search every pack, including finished ones, or use the search bar.') + '</div></div>';
+      '<div id="ires"></div><div id="ibrowse">' + skeleton(3) + '</div></div>';
     IMP = { pack: null, preview: null, rows: [], season: q.season != null && q.season !== '' ? +q.season : null, seriesId: q.seriesId ? +q.seriesId : null,
-            slug: q.series || null, missingOnly: !!q.missing, wantPack: q.pack || null, dl: q.dl || null, seriesLocked: false };
+            slug: q.series || null, missingOnly: !!q.missing, wantPack: q.pack || null, dl: q.dl || null, seriesLocked: false,
+            browse: { mode: 'needs', q: '' }, autoPick: false };
     IMP.packCombo = combo($('#cPack'), {
       placeholder: 'Search packs...', label: 'lPack', emptyText: 'No packs need importing. Type to search finished packs.',
       defaultFilter: function (p) {
@@ -34,7 +35,7 @@
     IMP.seriesCombo.loading('Loading series...');
     loadSeries().then(function (list) {
       IMP.seriesCombo.loading(null);
-      IMP.seriesCombo.set(list.map(function (s) { return { value: s.id, label: s.title, sub: s.year ? String(s.year) : '', search: s.title + ' ' + (s.year || '') }; }));
+      IMP.seriesCombo.set(list.map(function (s) { return { value: s.id, label: s.title, sub: [s.year || '', s.network].filter(Boolean).join(' · '), img: s.poster ? posterUrl(s.id) : '', search: s.title + ' ' + (s.year || '') + ' ' + (s.network || '') }; }));
       if (IMP.slug) { var s = list.find(function (x) { return x.slug === IMP.slug; }); if (s) IMP.seriesId = s.id; }
       if (IMP.seriesId) { IMP.seriesCombo.select(IMP.seriesId, true); IMP.seriesLocked = true; }
       renderPills(); fillPacks();
@@ -103,9 +104,97 @@
       return { value: x.path, label: x.name, sub: sub.join(' · '), chip: STATE_LBL[x.state], item: x, search: x.name + ' ' + (x.series_title || '') + ' ' + x.seasons };
     }));
     var needs = items.filter(function (x) { return x.state === 'needs' || x.state === 'review'; }).length;
-    var s = !IMP.pack && $('#ires .empty .s');
-    if (s) s.textContent = needs ? plural(needs, 'pack') + ' ' + (needs === 1 ? 'needs' : 'need') + ' attention' + (sid ? ' for this series' : '') + '. Pick one in the Pack box, or type to search every pack.'
-      : 'Nothing here needs importing' + (sid ? ' for this series' : '') + '. Type in the Pack box to search finished packs and run one again.';
+    drawBrowse();
+  }
+  // ------------------------------------------------------------ series posters (Sonarr's series index, poster view)
+  function actionable(x) {
+    if (x.state !== 'needs' && x.state !== 'review') return false;
+    if (IMP.missingOnly && x.state !== 'needs') return false;
+    return IMP.season == null || (x.season_list || []).indexOf(IMP.season) !== -1;
+  }
+  function seriesMeta(s) { return [s.year || '', s.network].filter(Boolean).join(' · '); }
+  function posterCard(s, n) {
+    var pct = s.episodes ? Math.min(100, Math.round(100 * s.files / s.episodes)) : 0;
+    var cls = 'pc-' + (s.episodes && s.files >= s.episodes ? (s.status === 'ended' ? 'e' : 'c') : (s.monitored ? 'm' : 'u'));
+    return '<button type="button" class="pcard" data-sid="' + s.id + '" aria-label="' + esc(s.title + (n ? ', ' + plural(n, 'pack') + ' to import' : '')) + '">' +
+      (n ? '<span class="pbadge">' + plural(n, 'pack') + '</span>' : '') +
+      '<span class="pimg"><span class="ptxt">' + esc(s.title) + '</span>' + (s.poster ? '<img loading="lazy" alt="" src="' + esc(posterUrl(s.id)) + '">' : '') + '</span>' +
+      '<span class="pprog" title="' + s.files + ' of ' + s.episodes + ' episodes on disk"><i class="' + cls + '" style="width:' + pct + '%"></i></span>' +
+      '<span class="pmeta"><span class="pt">' + esc(s.title) + '</span><span class="ps">' + esc(seriesMeta(s) || ' ') + '</span></span></button>';
+  }
+  function drawBrowse() {
+    var el = $('#ibrowse'); if (!el || !IMP) return;
+    if (IMP.pack) { el.innerHTML = ''; el.removeAttribute('data-v'); return; }
+    if (!DATA.catalog || !DATA.series) return;
+    var sid = IMP.seriesLocked ? IMP.seriesCombo.value() : null;
+    if (sid) return drawSeriesPacks(el, sid);
+    var cnt = {}, unknown = 0;
+    DATA.catalog.items.forEach(function (x) { if (!actionable(x)) return; if (x.series_id) cnt[x.series_id] = (cnt[x.series_id] || 0) + 1; else unknown++; });
+    var waiting = DATA.series.filter(function (s) { return cnt[s.id]; });
+    var B = IMP.browse;
+    if (el.getAttribute('data-v') !== 'grid') {
+      el.setAttribute('data-v', 'grid');
+      el.innerHTML = '<div class="pbar-top"><h2 class="legend" id="pbTitle"></h2>' +
+        '<div class="seg" role="radiogroup" aria-label="Which series"><button type="button" role="radio" data-bm="needs"></button><button type="button" role="radio" data-bm="all"></button></div>' +
+        '<input type="text" id="pbQ" placeholder="Filter series" aria-label="Filter series" autocomplete="off" spellcheck="false"></div>' +
+        '<div id="pbNote"></div><div class="pgrid" id="pbGrid"></div>';
+      $('#pbQ').value = B.q;
+      $('#pbQ').addEventListener('input', function () { B.q = this.value; drawBrowse(); });
+      each(el.querySelectorAll('[data-bm]'), function (b) { b.addEventListener('click', function () { B.mode = b.getAttribute('data-bm'); drawBrowse(); }); });
+      $('#pbGrid').addEventListener('error', function (e) { if (e.target.tagName === 'IMG') e.target.remove(); }, true);
+      $('#pbGrid').addEventListener('click', function (e) {
+        var c = e.target.closest('.pcard'); if (!c) return;
+        IMP.autoPick = true; IMP.seriesCombo.select(+c.getAttribute('data-sid'), true); IMP.seriesLocked = true; renderPills(); fillPacks();
+      });
+    }
+    var mode = B.mode === 'all' ? 'all' : 'needs';
+    each(el.querySelectorAll('[data-bm]'), function (b) {
+      var all = b.getAttribute('data-bm') === 'all';
+      b.textContent = all ? 'All series (' + DATA.series.length + ')' : 'Needs import (' + waiting.length + ')';
+      b.setAttribute('aria-checked', String((all ? 'all' : 'needs') === mode));
+    });
+    $('#pbTitle').textContent = mode === 'all' ? 'All Series' : 'Series With Packs to Import';
+    var list = mode === 'all' ? DATA.series : waiting, qq = B.q.trim().toLowerCase();
+    if (qq) list = list.filter(function (s) { return (s.title + ' ' + (s.year || '') + ' ' + (s.network || '')).toLowerCase().indexOf(qq) !== -1; });
+    var note = '';
+    if (DATA.catalog.building && !waiting.length) {
+      note = alertBox('busy', 'Checking your download folders against the library...');
+      if (!IMP.recheck) IMP.recheck = setTimeout(function () { IMP.recheck = null; if ($('#ibrowse')) refreshCatalog(false); }, 3000);
+    } else if (mode === 'needs' && !waiting.length) note = alertBox('ok', 'Nothing needs importing right now. Pick <b>All series</b> to browse your library, or type in the Pack box to run a finished pack again.');
+    if (unknown) note += alertBox('warn', plural(unknown, 'pack') + ' could not be matched to a series. Find ' + (unknown === 1 ? 'it' : 'them') + ' in the Pack box, marked Needs review.');
+    $('#pbNote').innerHTML = note;
+    var sig = mode + '|' + qq + '|' + list.map(function (s) { return s.id + ':' + (cnt[s.id] || 0); }).join(',');
+    var g = $('#pbGrid'); if (g.getAttribute('data-sig') === sig) return;
+    g.setAttribute('data-sig', sig);
+    g.innerHTML = list.length ? list.map(function (s) { return posterCard(s, cnt[s.id]); }).join('')
+      : (qq ? '<div class="muted">No series match "' + esc(B.q) + '".</div>' : '');
+  }
+  function drawSeriesPacks(el, sid) {
+    var s = (DATA.series || []).find(function (x) { return x.id === sid; }) || { id: sid, title: seriesTitle(sid) };
+    var order = { needs: 0, review: 1, done: 2, covered: 3 };
+    var items = DATA.catalog.items.filter(function (x) {
+      return x.series_id === sid && (IMP.season == null || (x.season_list || []).indexOf(IMP.season) !== -1);
+    }).sort(function (a, b) { return (order[a.state] - order[b.state]) || a.name.localeCompare(b.name); });
+    var act = items.filter(actionable);
+    if (IMP.autoPick && act.length === 1) { IMP.autoPick = false; IMP.packCombo.select(act[0].path, true); selectPack(act[0]); return; }
+    IMP.autoPick = false;
+    el.setAttribute('data-v', 'series');
+    var h = '<div class="shead">' + (s.poster ? '<img alt="" src="' + esc(posterUrl(s.id)) + '">' : '') +
+      '<div><div class="t">' + esc(s.title) + '</div><div class="s">' + esc([seriesMeta(s), s.episodes ? s.files + ' of ' + s.episodes + ' episodes on disk' : ''].filter(Boolean).join(' · ')) + '</div></div></div>';
+    if (!items.length) h += emptyState('layers', 'No packs for this series', 'Nothing in your download folders belongs to ' + esc(s.title) + (IMP.season != null ? ' for this season' : '') + '.');
+    else {
+      h += '<div class="tw"><table class="tbl plist"><thead><tr><th>Pack</th><th class="min">Seasons</th><th class="min r">Files</th><th class="min r">Missing</th><th class="min">State</th></tr></thead><tbody>' +
+        items.map(function (x, i) {
+          return '<tr data-pi="' + i + '" tabindex="0"><td class="pk wrap strong">' + esc(x.name) + '</td><td class="min">' + esc(x.seasons || '') + '</td><td class="min r">' + (x.files || 0) +
+            '</td><td class="min r">' + (x.state === 'needs' ? (x.missing || 0) : '') + '</td><td class="min">' + (STATE_LBL[x.state] || '') + '</td></tr>';
+        }).join('') + '</tbody></table></div>';
+    }
+    el.innerHTML = h;
+    each(el.querySelectorAll('tr[data-pi]'), function (tr) {
+      function go() { var it = items[+tr.getAttribute('data-pi')]; IMP.packCombo.select(it.path, true); selectPack(it); }
+      tr.addEventListener('click', go);
+      tr.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+    });
   }
   function selectPack(item) {
     IMP.pack = item;
@@ -116,6 +205,7 @@
     var item = IMP.pack; if (!item) return;
     var st = $('#ist'), res = $('#ires'), token = {};
     IMP.preview = null; IMP.rows = []; IMP.token = token; updateImportButton();
+    drawBrowse();
     st.innerHTML = alertBox('busy', 'Matching ' + plural(item.files, 'file') + ' in <b>' + esc(item.name) + '</b> against Sonarr...');
     res.innerHTML = skeleton(8);
     api('api/preview', { pack: item.path, series_id: IMP.seriesCombo.value() || null }).then(function (d) {

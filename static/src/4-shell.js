@@ -2,11 +2,18 @@
   // ================================================================== shell
   var hostEl = null, root = null, $ = null, PAGE = null, busy = false;
   var ICONS = [['stock', 'static/icons/fixarr.webp', 'Stock'], ['alt', 'static/icons/fixarr2.webp', 'Alternate']];
+  var ALT_DARK = 'static/icons/fixarr2-dark.webp';       // the alternate icon drawn in black, for light backgrounds
+  function themeIsLight() {
+    if (!STANDALONE) return lightPage();
+    var h = document.documentElement;
+    return h.getAttribute('data-theme') === 'sonarr-light' || h.classList.contains('light');
+  }
+  function onLight(url) { return /fixarr2\.webp(\?|$)/.test(url || '') ? BASE + ALT_DARK : url; }   // same icon, readable on white
   function siteIcon() { var v = null; try { v = localStorage.getItem('fixarr-icon'); } catch (e) {} return v || BASE + ICONS[0][1]; }
   function applyIcon(url) {
     try { localStorage.setItem('fixarr-icon', url); } catch (e) {}
     each(root.querySelectorAll('.wm-icon'), function (i) { i.src = url; });
-    var f = document.querySelector('link[rel=icon]'); if (f && STANDALONE) f.href = url;
+    var f = document.querySelector('link[rel=icon]'); if (f && STANDALONE) f.href = themeIsLight() ? onLight(url) : url;
   }
 
   function mount() {
@@ -250,7 +257,7 @@
       var h = '';
       shown.forEach(function (p, i) {
         h += '<div class="op' + (i === active ? ' on' : '') + (p.value === value ? ' sel' : '') + '" role="option" data-i="' + i + '" aria-selected="' + (p.value === value) + '">' +
-          '<span class="m"><span class="l">' + esc(p.label) + '</span>' + (p.sub ? '<span class="s">' + esc(p.sub) + '</span>' : '') + '</span>' + (p.chip || '') + '</div>';
+          (p.img ? '<img class="th" loading="lazy" alt="" src="' + esc(p.img) + '">' : '') + '<span class="m"><span class="l">' + esc(p.label) + '</span>' + (p.sub ? '<span class="s">' + esc(p.sub) + '</span>' : '') + '</span>' + (p.chip || '') + '</div>';
       });
       if (!q && o.footer) h += o.footer(opts.length - shown.length);
       lb.innerHTML = h;

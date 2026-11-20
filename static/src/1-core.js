@@ -10,7 +10,8 @@
 (function () {
   'use strict';
   if (window.__fixarrLayer) return;
-  var VERSION = '3.1.0';
+  var VERSION = '3.2.0';
+  var BUILD = '__FIXARR_BUILD__';        // replaced by static/build.sh; lets the add-on spot a stale cached copy
   window.__fixarrLayer = VERSION;
   var STANDALONE = !!window.FIXARR_STANDALONE;
   var REPO = 'Apex-Tech-Labs/fixarr';
@@ -28,6 +29,7 @@
     });
   }
   function pad(n) { return String(n).padStart(2, '0'); }
+  function posterUrl(id) { return window.FIXARR_DEMO_POSTER ? window.FIXARR_DEMO_POSTER(id) : BASE + 'api/poster/' + id; }
   function plural(n, one, many) { return n + ' ' + (n === 1 ? one : (many || one + 's')); }
   function ago(ts) {
     if (!ts) return '';

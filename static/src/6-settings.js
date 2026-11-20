@@ -125,8 +125,8 @@
         return '<button type="button" role="radio" data-theme="' + t[0] + '" aria-checked="' + (t[0] === cur) + '">' + t[1] + '</button>'; }).join('') + '</div>',
         'Auto follows your device\'s light or dark setting. Inside Sonarr, Fixarr always uses Sonarr\'s own theme.')) +
       fs('Site Icon', fg('Icon', '<div class="icons">' + ICONS.map(function (x) {
-          return '<button type="button" class="icn' + (BASE + x[1] === icon ? ' on' : '') + '" data-icon="' + esc(BASE + x[1]) + '" title="' + x[2] + '" aria-label="' + x[2] + ' icon"><img src="' + esc(BASE + x[1]) + '" alt=""></button>';
-        }).join('') + (custom ? '<button type="button" class="icn on" data-icon="' + esc(icon) + '" title="Custom" aria-label="Custom icon"><img src="' + esc(icon) + '" alt=""></button>' : '') + '</div>',
+          return '<button type="button" class="icn' + (BASE + x[1] === icon ? ' on' : '') + '" data-icon="' + esc(BASE + x[1]) + '" title="' + x[2] + '" aria-label="' + x[2] + ' icon"><img src="' + esc(themeIsLight() ? onLight(BASE + x[1]) : BASE + x[1]) + '" alt=""></button>';
+        }).join('') + (custom ? '<button type="button" class="icn on" data-icon="' + esc(icon) + '" title="Custom" aria-label="Custom icon"><img src="' + esc(themeIsLight() ? onLight(icon) : icon) + '" alt=""></button>' : '') + '</div>',
         'Used next to the Fixarr title in the header and as the browser tab icon.') +
         fg('Custom icon', '<div class="row" style="align-items:center"><input type="text" id="iUrl" placeholder="Paste an image URL" style="flex:1;min-width:220px">' +
           '<button class="btn" type="button" id="iApply">Use URL</button><label class="btn">Upload<input type="file" id="iFile" accept=".png,.webp,.svg,.ico,image/png,image/webp,image/svg+xml,image/x-icon" hidden></label></div>',
@@ -162,7 +162,7 @@
       btn.addEventListener('click', function () { each(btn.parentElement.children, function (x) { x.setAttribute('aria-checked', x === btn ? 'true' : 'false'); }); save(btn.getAttribute('data-seg'), btn.getAttribute('data-v')); });
     });
     each(b.querySelectorAll('[data-theme]'), function (btn) {
-      btn.addEventListener('click', function () { each(btn.parentElement.children, function (x) { x.setAttribute('aria-checked', x === btn ? 'true' : 'false'); }); if (window.fixarrTheme) window.fixarrTheme(btn.getAttribute('data-theme')); note('Saved'); });
+      btn.addEventListener('click', function () { each(btn.parentElement.children, function (x) { x.setAttribute('aria-checked', x === btn ? 'true' : 'false'); }); if (window.fixarrTheme) window.fixarrTheme(btn.getAttribute('data-theme')); applyIcon(siteIcon()); each(b.querySelectorAll('.icn img'), function (im) { var u = im.parentElement.getAttribute('data-icon'); im.src = themeIsLight() ? onLight(u) : u; }); note('Saved'); });
     });
     each(b.querySelectorAll('[data-icon]'), function (btn) {
       btn.addEventListener('click', function () { each(b.querySelectorAll('.icn'), function (x) { x.classList.toggle('on', x === btn); }); applyIcon(btn.getAttribute('data-icon')); note('Saved'); });
@@ -187,7 +187,22 @@
     var m = /^#?([0-9a-f]{6})$/i.exec(v); if (!m) return false;
     var n = parseInt(m[1], 16); return (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) > 150;
   }
+  // A browser or proxy cache can hand Sonarr an old copy of this script. Ask Fixarr which build is current and, if this
+  // copy is older, load the current one under a URL no cache has seen. window.__fixarrFresh stops it from looping.
   function start() {
+    if (STANDALONE || window.__fixarrFresh || BUILD.indexOf('__') === 0 || !window.fetch) return boot();
+    fetch(BASE + 'api/build', { cache: 'no-store', credentials: 'same-origin' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (b) {
+        if (!b || !b.build || b.build === BUILD) return boot();
+        window.__fixarrFresh = b.build; window.__fixarrLayer = null;
+        var s = document.createElement('script');
+        s.src = BASE + 'layer.js?v=' + encodeURIComponent(b.build);
+        s.onerror = function () { window.__fixarrLayer = VERSION; boot(); };
+        document.head.appendChild(s);
+      }).catch(function () { boot(); });
+  }
+  function boot() {
     mount();
     loadOverview();
     setInterval(function () { if (!document.hidden) loadOverview(); }, 180000);

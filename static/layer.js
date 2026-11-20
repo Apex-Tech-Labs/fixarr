@@ -10,7 +10,8 @@
 (function () {
   'use strict';
   if (window.__fixarrLayer) return;
-  var VERSION = '3.1.0';
+  var VERSION = '3.2.0';
+  var BUILD = '20261120073304';        // replaced by static/build.sh; lets the add-on spot a stale cached copy
   window.__fixarrLayer = VERSION;
   var STANDALONE = !!window.FIXARR_STANDALONE;
   var REPO = 'Apex-Tech-Labs/fixarr';
@@ -28,6 +29,7 @@
     });
   }
   function pad(n) { return String(n).padStart(2, '0'); }
+  function posterUrl(id) { return window.FIXARR_DEMO_POSTER ? window.FIXARR_DEMO_POSTER(id) : BASE + 'api/poster/' + id; }
   function plural(n, one, many) { return n + ' ' + (n === 1 ? one : (many || one + 's')); }
   function ago(ts) {
     if (!ts) return '';
@@ -496,7 +498,7 @@
 
     '.side{background:var(--side);overflow-y:auto;display:flex;flex-direction:column;padding-bottom:12px}',
     '.navi{position:relative}',
-    '.nl{position:relative;display:flex;align-items:center;gap:13px;padding:12px 24px;color:var(--strong);font-weight:700;font-size:14px;letter-spacing:.15px;text-decoration:none;cursor:pointer;transition:background .2s ease,color .2s ease}',
+    '.nl{position:relative;display:flex;align-items:center;gap:13px;padding:12px 24px;color:var(--fxNav,#fff);font-weight:700;font-size:14px;letter-spacing:.15px;text-decoration:none;cursor:pointer;transition:background .2s ease,color .2s ease}',
     '.nl::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--acc);transform:scaleY(0);transform-origin:center;transition:transform .25s cubic-bezier(.2,.8,.2,1)}',
     '.nl::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,color-mix(in srgb,var(--acc) 14%,transparent),transparent 70%);opacity:0;transition:opacity .25s ease;pointer-events:none}',
     '.nl .i{width:15px;height:15px;transition:transform .25s cubic-bezier(.2,.8,.2,1),color .2s}',
@@ -508,7 +510,7 @@
     '.subs{padding-bottom:4px}',
     '.ns{position:relative;display:block;padding:9px 24px 9px 52px;color:var(--sideTxt);font-size:14px;font-weight:500;text-decoration:none;transition:color .2s,padding-left .2s}',
     '.ns:hover{color:var(--acc);padding-left:56px}.ns.on{color:var(--acc)}',
-    '.side-foot{margin-top:auto;padding:14px 24px 0;font-size:12px;color:var(--muted)}.side-foot a{color:var(--muted);text-decoration:none}.side-foot a:hover{color:var(--acc)}',
+    '.side-foot{margin-top:auto;padding:14px 24px 0;font-size:12px;color:var(--muted)}.side-foot a{color:var(--fxFoot,var(--muted));text-decoration:none}.side-foot a:hover{color:var(--acc)}',
     '.scrim{display:none}',
     '@media (max-width:768px){.app{grid-template-columns:minmax(0,1fr)}.side{position:fixed;top:60px;bottom:0;left:0;width:240px;z-index:4;transform:translateX(-100%);transition:transform .25s ease}',
     '.app.menu .side{transform:none}.app.menu .scrim{display:block;position:fixed;inset:60px 0 0;background:rgba(0,0,0,.5);z-index:3}.burger{display:flex}',
@@ -594,6 +596,25 @@
     '.op{display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer}.op .m{flex:1;min-width:0}',
     '.op .l{display:block;color:var(--strong);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.op .s{display:block;font-size:12px;color:var(--muted)}',
     '.op.on,.op:hover{background:var(--hover)}.op.sel .l{color:var(--acc)}',
+    '.op .th{width:30px;height:45px;flex:none;object-fit:cover;border-radius:2px;background:var(--card)}',
+    /* poster browser, laid out like Sonarr's series index (poster view) */
+    '.pbar-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 16px}.pbar-top .legend{flex:1;margin:0;border:0;padding:0}',
+    '.pbar-top input{width:220px}',
+    '.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(162px,1fr));gap:20px 18px}',
+    '.pcard{position:relative;display:block;padding:0;border:0;background:var(--card);color:inherit;text-align:left;cursor:pointer;border-radius:4px;overflow:hidden;box-shadow:0 0 10px rgba(0,0,0,.35);transition:transform .2s cubic-bezier(.2,.8,.2,1),box-shadow .2s}',
+    '.pcard:hover{transform:translateY(-3px);box-shadow:0 6px 18px rgba(0,0,0,.5)}.pcard:focus-visible{outline:2px solid var(--acc);outline-offset:2px}',
+    '.pcard .pimg{display:block;position:relative;aspect-ratio:2/3;overflow:hidden;background:color-mix(in srgb,var(--card) 70%,#000)}',
+    '.pcard .pimg img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}',
+    '.pcard .pimg .ptxt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:12px;text-align:center;font-size:15px;font-weight:600;color:var(--strong)}',
+    '.pcard .pbadge{position:absolute;top:8px;right:8px;z-index:1;padding:0 7px;border-radius:2px;background:var(--badge);color:#fff;font-size:11.5px;font-weight:700;line-height:20px;box-shadow:0 1px 3px rgba(0,0,0,.5)}',
+    '.pcard .pprog{display:block;height:5px;background:color-mix(in srgb,var(--txt) 15%,transparent)}.pcard .pprog i{display:block;height:100%;max-width:100%}',
+    '.pprog .pc-c{background:#5d9cec}.pprog .pc-e{background:#27c24c}.pprog .pc-m{background:#f05050}.pprog .pc-u{background:#ffa500}',
+    '.pcard .pmeta{display:block;padding:7px 9px 9px}.pcard .pt{display:block;color:var(--strong);font-weight:600;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
+    '.pcard .ps{display:block;color:var(--muted);font-size:12px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
+    '.shead{display:flex;gap:14px;align-items:center;margin:0 0 16px}.shead img{width:60px;height:90px;object-fit:cover;border-radius:3px;background:var(--card);box-shadow:0 0 8px rgba(0,0,0,.4)}',
+    '.shead .t{font-size:21px;color:var(--strong);line-height:1.3}.shead .s{color:var(--muted);font-size:13px;margin-top:3px}',
+    '.plist tr[data-pi]{cursor:pointer}.plist td.pk{cursor:pointer}.plist tr:hover td{background:var(--hover)}',
+    '@media (max-width:640px){.pgrid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:14px}.pbar-top input{width:100%}}',
     '.lb .none{padding:10px 12px;color:var(--muted)}.lb .grp{padding:8px 12px 4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}',
     '.summary{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:20px 0 10px;color:var(--muted)}.summary b{color:var(--strong)}',
 
@@ -634,11 +655,18 @@
   // ================================================================== shell
   var hostEl = null, root = null, $ = null, PAGE = null, busy = false;
   var ICONS = [['stock', 'static/icons/fixarr.webp', 'Stock'], ['alt', 'static/icons/fixarr2.webp', 'Alternate']];
+  var ALT_DARK = 'static/icons/fixarr2-dark.webp';       // the alternate icon drawn in black, for light backgrounds
+  function themeIsLight() {
+    if (!STANDALONE) return lightPage();
+    var h = document.documentElement;
+    return h.getAttribute('data-theme') === 'sonarr-light' || h.classList.contains('light');
+  }
+  function onLight(url) { return /fixarr2\.webp(\?|$)/.test(url || '') ? BASE + ALT_DARK : url; }   // same icon, readable on white
   function siteIcon() { var v = null; try { v = localStorage.getItem('fixarr-icon'); } catch (e) {} return v || BASE + ICONS[0][1]; }
   function applyIcon(url) {
     try { localStorage.setItem('fixarr-icon', url); } catch (e) {}
     each(root.querySelectorAll('.wm-icon'), function (i) { i.src = url; });
-    var f = document.querySelector('link[rel=icon]'); if (f && STANDALONE) f.href = url;
+    var f = document.querySelector('link[rel=icon]'); if (f && STANDALONE) f.href = themeIsLight() ? onLight(url) : url;
   }
 
   function mount() {
@@ -882,7 +910,7 @@
       var h = '';
       shown.forEach(function (p, i) {
         h += '<div class="op' + (i === active ? ' on' : '') + (p.value === value ? ' sel' : '') + '" role="option" data-i="' + i + '" aria-selected="' + (p.value === value) + '">' +
-          '<span class="m"><span class="l">' + esc(p.label) + '</span>' + (p.sub ? '<span class="s">' + esc(p.sub) + '</span>' : '') + '</span>' + (p.chip || '') + '</div>';
+          (p.img ? '<img class="th" loading="lazy" alt="" src="' + esc(p.img) + '">' : '') + '<span class="m"><span class="l">' + esc(p.label) + '</span>' + (p.sub ? '<span class="s">' + esc(p.sub) + '</span>' : '') + '</span>' + (p.chip || '') + '</div>';
       });
       if (!q && o.footer) h += o.footer(opts.length - shown.length);
       lb.innerHTML = h;
@@ -946,9 +974,10 @@
       '<div class="grow" style="flex:2"><span class="flabel" id="lPack">Pack</span><div id="cPack"></div></div>' +
       '<div class="grow"><span class="flabel" id="lSeries">Series</span><div id="cSeries"></div></div></div>' +
       '<div class="pills" id="pills"></div><div id="ist" style="margin-top:18px"></div>' +
-      '<div id="ires">' + emptyState('layers', 'Pick a pack', 'Packs that still need importing are listed first. Type in the Pack box to search every pack, including finished ones, or use the search bar.') + '</div></div>';
+      '<div id="ires"></div><div id="ibrowse">' + skeleton(3) + '</div></div>';
     IMP = { pack: null, preview: null, rows: [], season: q.season != null && q.season !== '' ? +q.season : null, seriesId: q.seriesId ? +q.seriesId : null,
-            slug: q.series || null, missingOnly: !!q.missing, wantPack: q.pack || null, dl: q.dl || null, seriesLocked: false };
+            slug: q.series || null, missingOnly: !!q.missing, wantPack: q.pack || null, dl: q.dl || null, seriesLocked: false,
+            browse: { mode: 'needs', q: '' }, autoPick: false };
     IMP.packCombo = combo($('#cPack'), {
       placeholder: 'Search packs...', label: 'lPack', emptyText: 'No packs need importing. Type to search finished packs.',
       defaultFilter: function (p) {
@@ -965,7 +994,7 @@
     IMP.seriesCombo.loading('Loading series...');
     loadSeries().then(function (list) {
       IMP.seriesCombo.loading(null);
-      IMP.seriesCombo.set(list.map(function (s) { return { value: s.id, label: s.title, sub: s.year ? String(s.year) : '', search: s.title + ' ' + (s.year || '') }; }));
+      IMP.seriesCombo.set(list.map(function (s) { return { value: s.id, label: s.title, sub: [s.year || '', s.network].filter(Boolean).join(' · '), img: s.poster ? posterUrl(s.id) : '', search: s.title + ' ' + (s.year || '') + ' ' + (s.network || '') }; }));
       if (IMP.slug) { var s = list.find(function (x) { return x.slug === IMP.slug; }); if (s) IMP.seriesId = s.id; }
       if (IMP.seriesId) { IMP.seriesCombo.select(IMP.seriesId, true); IMP.seriesLocked = true; }
       renderPills(); fillPacks();
@@ -1034,9 +1063,97 @@
       return { value: x.path, label: x.name, sub: sub.join(' · '), chip: STATE_LBL[x.state], item: x, search: x.name + ' ' + (x.series_title || '') + ' ' + x.seasons };
     }));
     var needs = items.filter(function (x) { return x.state === 'needs' || x.state === 'review'; }).length;
-    var s = !IMP.pack && $('#ires .empty .s');
-    if (s) s.textContent = needs ? plural(needs, 'pack') + ' ' + (needs === 1 ? 'needs' : 'need') + ' attention' + (sid ? ' for this series' : '') + '. Pick one in the Pack box, or type to search every pack.'
-      : 'Nothing here needs importing' + (sid ? ' for this series' : '') + '. Type in the Pack box to search finished packs and run one again.';
+    drawBrowse();
+  }
+  // ------------------------------------------------------------ series posters (Sonarr's series index, poster view)
+  function actionable(x) {
+    if (x.state !== 'needs' && x.state !== 'review') return false;
+    if (IMP.missingOnly && x.state !== 'needs') return false;
+    return IMP.season == null || (x.season_list || []).indexOf(IMP.season) !== -1;
+  }
+  function seriesMeta(s) { return [s.year || '', s.network].filter(Boolean).join(' · '); }
+  function posterCard(s, n) {
+    var pct = s.episodes ? Math.min(100, Math.round(100 * s.files / s.episodes)) : 0;
+    var cls = 'pc-' + (s.episodes && s.files >= s.episodes ? (s.status === 'ended' ? 'e' : 'c') : (s.monitored ? 'm' : 'u'));
+    return '<button type="button" class="pcard" data-sid="' + s.id + '" aria-label="' + esc(s.title + (n ? ', ' + plural(n, 'pack') + ' to import' : '')) + '">' +
+      (n ? '<span class="pbadge">' + plural(n, 'pack') + '</span>' : '') +
+      '<span class="pimg"><span class="ptxt">' + esc(s.title) + '</span>' + (s.poster ? '<img loading="lazy" alt="" src="' + esc(posterUrl(s.id)) + '">' : '') + '</span>' +
+      '<span class="pprog" title="' + s.files + ' of ' + s.episodes + ' episodes on disk"><i class="' + cls + '" style="width:' + pct + '%"></i></span>' +
+      '<span class="pmeta"><span class="pt">' + esc(s.title) + '</span><span class="ps">' + esc(seriesMeta(s) || ' ') + '</span></span></button>';
+  }
+  function drawBrowse() {
+    var el = $('#ibrowse'); if (!el || !IMP) return;
+    if (IMP.pack) { el.innerHTML = ''; el.removeAttribute('data-v'); return; }
+    if (!DATA.catalog || !DATA.series) return;
+    var sid = IMP.seriesLocked ? IMP.seriesCombo.value() : null;
+    if (sid) return drawSeriesPacks(el, sid);
+    var cnt = {}, unknown = 0;
+    DATA.catalog.items.forEach(function (x) { if (!actionable(x)) return; if (x.series_id) cnt[x.series_id] = (cnt[x.series_id] || 0) + 1; else unknown++; });
+    var waiting = DATA.series.filter(function (s) { return cnt[s.id]; });
+    var B = IMP.browse;
+    if (el.getAttribute('data-v') !== 'grid') {
+      el.setAttribute('data-v', 'grid');
+      el.innerHTML = '<div class="pbar-top"><h2 class="legend" id="pbTitle"></h2>' +
+        '<div class="seg" role="radiogroup" aria-label="Which series"><button type="button" role="radio" data-bm="needs"></button><button type="button" role="radio" data-bm="all"></button></div>' +
+        '<input type="text" id="pbQ" placeholder="Filter series" aria-label="Filter series" autocomplete="off" spellcheck="false"></div>' +
+        '<div id="pbNote"></div><div class="pgrid" id="pbGrid"></div>';
+      $('#pbQ').value = B.q;
+      $('#pbQ').addEventListener('input', function () { B.q = this.value; drawBrowse(); });
+      each(el.querySelectorAll('[data-bm]'), function (b) { b.addEventListener('click', function () { B.mode = b.getAttribute('data-bm'); drawBrowse(); }); });
+      $('#pbGrid').addEventListener('error', function (e) { if (e.target.tagName === 'IMG') e.target.remove(); }, true);
+      $('#pbGrid').addEventListener('click', function (e) {
+        var c = e.target.closest('.pcard'); if (!c) return;
+        IMP.autoPick = true; IMP.seriesCombo.select(+c.getAttribute('data-sid'), true); IMP.seriesLocked = true; renderPills(); fillPacks();
+      });
+    }
+    var mode = B.mode === 'all' ? 'all' : 'needs';
+    each(el.querySelectorAll('[data-bm]'), function (b) {
+      var all = b.getAttribute('data-bm') === 'all';
+      b.textContent = all ? 'All series (' + DATA.series.length + ')' : 'Needs import (' + waiting.length + ')';
+      b.setAttribute('aria-checked', String((all ? 'all' : 'needs') === mode));
+    });
+    $('#pbTitle').textContent = mode === 'all' ? 'All Series' : 'Series With Packs to Import';
+    var list = mode === 'all' ? DATA.series : waiting, qq = B.q.trim().toLowerCase();
+    if (qq) list = list.filter(function (s) { return (s.title + ' ' + (s.year || '') + ' ' + (s.network || '')).toLowerCase().indexOf(qq) !== -1; });
+    var note = '';
+    if (DATA.catalog.building && !waiting.length) {
+      note = alertBox('busy', 'Checking your download folders against the library...');
+      if (!IMP.recheck) IMP.recheck = setTimeout(function () { IMP.recheck = null; if ($('#ibrowse')) refreshCatalog(false); }, 3000);
+    } else if (mode === 'needs' && !waiting.length) note = alertBox('ok', 'Nothing needs importing right now. Pick <b>All series</b> to browse your library, or type in the Pack box to run a finished pack again.');
+    if (unknown) note += alertBox('warn', plural(unknown, 'pack') + ' could not be matched to a series. Find ' + (unknown === 1 ? 'it' : 'them') + ' in the Pack box, marked Needs review.');
+    $('#pbNote').innerHTML = note;
+    var sig = mode + '|' + qq + '|' + list.map(function (s) { return s.id + ':' + (cnt[s.id] || 0); }).join(',');
+    var g = $('#pbGrid'); if (g.getAttribute('data-sig') === sig) return;
+    g.setAttribute('data-sig', sig);
+    g.innerHTML = list.length ? list.map(function (s) { return posterCard(s, cnt[s.id]); }).join('')
+      : (qq ? '<div class="muted">No series match "' + esc(B.q) + '".</div>' : '');
+  }
+  function drawSeriesPacks(el, sid) {
+    var s = (DATA.series || []).find(function (x) { return x.id === sid; }) || { id: sid, title: seriesTitle(sid) };
+    var order = { needs: 0, review: 1, done: 2, covered: 3 };
+    var items = DATA.catalog.items.filter(function (x) {
+      return x.series_id === sid && (IMP.season == null || (x.season_list || []).indexOf(IMP.season) !== -1);
+    }).sort(function (a, b) { return (order[a.state] - order[b.state]) || a.name.localeCompare(b.name); });
+    var act = items.filter(actionable);
+    if (IMP.autoPick && act.length === 1) { IMP.autoPick = false; IMP.packCombo.select(act[0].path, true); selectPack(act[0]); return; }
+    IMP.autoPick = false;
+    el.setAttribute('data-v', 'series');
+    var h = '<div class="shead">' + (s.poster ? '<img alt="" src="' + esc(posterUrl(s.id)) + '">' : '') +
+      '<div><div class="t">' + esc(s.title) + '</div><div class="s">' + esc([seriesMeta(s), s.episodes ? s.files + ' of ' + s.episodes + ' episodes on disk' : ''].filter(Boolean).join(' · ')) + '</div></div></div>';
+    if (!items.length) h += emptyState('layers', 'No packs for this series', 'Nothing in your download folders belongs to ' + esc(s.title) + (IMP.season != null ? ' for this season' : '') + '.');
+    else {
+      h += '<div class="tw"><table class="tbl plist"><thead><tr><th>Pack</th><th class="min">Seasons</th><th class="min r">Files</th><th class="min r">Missing</th><th class="min">State</th></tr></thead><tbody>' +
+        items.map(function (x, i) {
+          return '<tr data-pi="' + i + '" tabindex="0"><td class="pk wrap strong">' + esc(x.name) + '</td><td class="min">' + esc(x.seasons || '') + '</td><td class="min r">' + (x.files || 0) +
+            '</td><td class="min r">' + (x.state === 'needs' ? (x.missing || 0) : '') + '</td><td class="min">' + (STATE_LBL[x.state] || '') + '</td></tr>';
+        }).join('') + '</tbody></table></div>';
+    }
+    el.innerHTML = h;
+    each(el.querySelectorAll('tr[data-pi]'), function (tr) {
+      function go() { var it = items[+tr.getAttribute('data-pi')]; IMP.packCombo.select(it.path, true); selectPack(it); }
+      tr.addEventListener('click', go);
+      tr.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+    });
   }
   function selectPack(item) {
     IMP.pack = item;
@@ -1047,6 +1164,7 @@
     var item = IMP.pack; if (!item) return;
     var st = $('#ist'), res = $('#ires'), token = {};
     IMP.preview = null; IMP.rows = []; IMP.token = token; updateImportButton();
+    drawBrowse();
     st.innerHTML = alertBox('busy', 'Matching ' + plural(item.files, 'file') + ' in <b>' + esc(item.name) + '</b> against Sonarr...');
     res.innerHTML = skeleton(8);
     api('api/preview', { pack: item.path, series_id: IMP.seriesCombo.value() || null }).then(function (d) {
@@ -1514,8 +1632,8 @@
         return '<button type="button" role="radio" data-theme="' + t[0] + '" aria-checked="' + (t[0] === cur) + '">' + t[1] + '</button>'; }).join('') + '</div>',
         'Auto follows your device\'s light or dark setting. Inside Sonarr, Fixarr always uses Sonarr\'s own theme.')) +
       fs('Site Icon', fg('Icon', '<div class="icons">' + ICONS.map(function (x) {
-          return '<button type="button" class="icn' + (BASE + x[1] === icon ? ' on' : '') + '" data-icon="' + esc(BASE + x[1]) + '" title="' + x[2] + '" aria-label="' + x[2] + ' icon"><img src="' + esc(BASE + x[1]) + '" alt=""></button>';
-        }).join('') + (custom ? '<button type="button" class="icn on" data-icon="' + esc(icon) + '" title="Custom" aria-label="Custom icon"><img src="' + esc(icon) + '" alt=""></button>' : '') + '</div>',
+          return '<button type="button" class="icn' + (BASE + x[1] === icon ? ' on' : '') + '" data-icon="' + esc(BASE + x[1]) + '" title="' + x[2] + '" aria-label="' + x[2] + ' icon"><img src="' + esc(themeIsLight() ? onLight(BASE + x[1]) : BASE + x[1]) + '" alt=""></button>';
+        }).join('') + (custom ? '<button type="button" class="icn on" data-icon="' + esc(icon) + '" title="Custom" aria-label="Custom icon"><img src="' + esc(themeIsLight() ? onLight(icon) : icon) + '" alt=""></button>' : '') + '</div>',
         'Used next to the Fixarr title in the header and as the browser tab icon.') +
         fg('Custom icon', '<div class="row" style="align-items:center"><input type="text" id="iUrl" placeholder="Paste an image URL" style="flex:1;min-width:220px">' +
           '<button class="btn" type="button" id="iApply">Use URL</button><label class="btn">Upload<input type="file" id="iFile" accept=".png,.webp,.svg,.ico,image/png,image/webp,image/svg+xml,image/x-icon" hidden></label></div>',
@@ -1551,7 +1669,7 @@
       btn.addEventListener('click', function () { each(btn.parentElement.children, function (x) { x.setAttribute('aria-checked', x === btn ? 'true' : 'false'); }); save(btn.getAttribute('data-seg'), btn.getAttribute('data-v')); });
     });
     each(b.querySelectorAll('[data-theme]'), function (btn) {
-      btn.addEventListener('click', function () { each(btn.parentElement.children, function (x) { x.setAttribute('aria-checked', x === btn ? 'true' : 'false'); }); if (window.fixarrTheme) window.fixarrTheme(btn.getAttribute('data-theme')); note('Saved'); });
+      btn.addEventListener('click', function () { each(btn.parentElement.children, function (x) { x.setAttribute('aria-checked', x === btn ? 'true' : 'false'); }); if (window.fixarrTheme) window.fixarrTheme(btn.getAttribute('data-theme')); applyIcon(siteIcon()); each(b.querySelectorAll('.icn img'), function (im) { var u = im.parentElement.getAttribute('data-icon'); im.src = themeIsLight() ? onLight(u) : u; }); note('Saved'); });
     });
     each(b.querySelectorAll('[data-icon]'), function (btn) {
       btn.addEventListener('click', function () { each(b.querySelectorAll('.icn'), function (x) { x.classList.toggle('on', x === btn); }); applyIcon(btn.getAttribute('data-icon')); note('Saved'); });
@@ -1576,7 +1694,22 @@
     var m = /^#?([0-9a-f]{6})$/i.exec(v); if (!m) return false;
     var n = parseInt(m[1], 16); return (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) > 150;
   }
+  // A browser or proxy cache can hand Sonarr an old copy of this script. Ask Fixarr which build is current and, if this
+  // copy is older, load the current one under a URL no cache has seen. window.__fixarrFresh stops it from looping.
   function start() {
+    if (STANDALONE || window.__fixarrFresh || BUILD.indexOf('__') === 0 || !window.fetch) return boot();
+    fetch(BASE + 'api/build', { cache: 'no-store', credentials: 'same-origin' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (b) {
+        if (!b || !b.build || b.build === BUILD) return boot();
+        window.__fixarrFresh = b.build; window.__fixarrLayer = null;
+        var s = document.createElement('script');
+        s.src = BASE + 'layer.js?v=' + encodeURIComponent(b.build);
+        s.onerror = function () { window.__fixarrLayer = VERSION; boot(); };
+        document.head.appendChild(s);
+      }).catch(function () { boot(); });
+  }
+  function boot() {
     mount();
     loadOverview();
     setInterval(function () { if (!document.hidden) loadOverview(); }, 180000);

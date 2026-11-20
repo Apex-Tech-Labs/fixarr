@@ -27,7 +27,7 @@ jobs:
       - run: python3 -m py_compile *.py
       - run: python3 tests/units.py
       - run: python3 tests/regression.py
-      - run: node --check static/layer.js
+      - run: node --check static/layer.js && node --check static/demo.js
 
   image:
     needs: test

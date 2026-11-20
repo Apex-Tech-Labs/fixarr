@@ -3,7 +3,7 @@
 Routes kept from 2.x (Mission Patch and the standalone page use them): /, /api/packs, /api/preview,
 /api/import, /api/import/<job>. Everything else is new in 3.0.
 """
-import datetime, os, threading, time
+import datetime, os, re, threading, time
 from flask import Flask, request, jsonify, render_template, send_from_directory
 import audit, importer, packs, plex, resolver, sonarr, store, version
 from config import VERSION, CORS_ORIGINS, SONARR, SONARR_PUBLIC
@@ -26,12 +26,27 @@ def cors(r):
 def sonarr_down(e): return err(str(e), 502)
 
 # ------------------------------------------------------------------ pages and the layer
+_build = {"mtime": None, "id": VERSION}
+def layer_build():
+    """The build stamp static/build.sh writes into layer.js. It is part of the script URL, and the add-on compares it
+    with its own copy, so a new build is never stuck behind a browser or proxy cache."""
+    p = os.path.join(app.static_folder, "layer.js")
+    try: m = os.path.getmtime(p)
+    except OSError: return VERSION
+    if _build["mtime"] != m:
+        with open(p, encoding="utf-8") as f: head = f.read(6000)
+        mm = re.search(r"var BUILD = '([0-9A-Za-z.\-]+)'", head)
+        _build.update(mtime=m, id=mm.group(1) if mm else "%s-%d" % (VERSION, int(m)))
+    return _build["id"]
+
 @app.route("/")
-def index():
-    # The layer's file time is part of its URL, so a new build is never served from a browser or CDN cache.
-    try: v = "%s-%d" % (VERSION, int(os.path.getmtime(os.path.join(app.static_folder, "layer.js"))))
-    except OSError: v = VERSION
-    return render_template("index.html", version=VERSION, asset_v=v)
+def index(): return render_template("index.html", version=VERSION, asset_v=layer_build())
+
+@app.route("/api/build")
+def api_build():
+    r = jsonify({"version": VERSION, "build": layer_build()})
+    r.headers["Cache-Control"] = "no-store"
+    return r
 
 @app.route("/layer.js")
 def layer_js():
@@ -115,6 +130,23 @@ def api_import_status(job):
     j = importer.job(job)
     return jsonify(j) if j else err("Unknown import job.", 404)
 
+def _series_row(s):
+    st = s.get("statistics") or {}
+    return {"id": s["id"], "title": s["title"], "slug": s.get("titleSlug"), "year": s.get("year"),
+            "network": s.get("network") or "", "status": s.get("status") or "", "monitored": bool(s.get("monitored")),
+            "files": st.get("episodeFileCount") or 0, "episodes": st.get("episodeCount") or 0,
+            "poster": any((i.get("coverType") == "poster") for i in (s.get("images") or []))}
+
+@app.route("/api/poster/<int:sid>")
+def api_poster(sid):
+    """Sonarr's own poster for a series (the 250px thumbnail), so the web app can show it without Sonarr's key."""
+    try: data, ctype = sonarr.poster(sid)
+    except sonarr.SonarrError: data, ctype = None, None
+    if not data: return err("No poster.", 404)
+    r = app.response_class(data, mimetype=ctype or "image/jpeg")
+    r.headers["Cache-Control"] = "public, max-age=86400"
+    return r
+
 @app.route("/api/series")
 def api_series():
     series = sonarr.series_all()
@@ -122,9 +154,9 @@ def api_series():
     if slug or sid:
         for s in series:
             if (slug and s.get("titleSlug") == slug) or (sid and s["id"] == sid):
-                return jsonify({"id": s["id"], "title": s["title"], "slug": s.get("titleSlug"), "year": s.get("year")})
+                return jsonify(_series_row(s))
         return err("Series not found in Sonarr.", 404)
-    out = [{"id": s["id"], "title": s["title"], "slug": s.get("titleSlug"), "year": s.get("year")} for s in series]
+    out = [_series_row(s) for s in series]
     out.sort(key=lambda x: (x.get("title") or "").lower().removeprefix("the "))
     return jsonify(out)
 
